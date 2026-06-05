@@ -19,12 +19,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             EcosystemTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+
+                inicio()
             }
         }
     }
@@ -44,4 +40,11 @@ fun GreetingPreview() {
     EcosystemTheme {
         Greeting("Android")
     }
+}
+
+@Composable
+fun inicio() {
+
+
+
 }
