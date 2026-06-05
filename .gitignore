@@ -1,0 +1,19 @@
+# Gradle y carpetas de compilación (Obligatorio)
+.gradle/
+/build/
+/captures/
+/local.properties
+
+# Android Studio (Esencial para evitar conflictos de rutas locales)
+.idea/
+*.iml
+
+# Archivos generados por el Sistema Operativo (Windows/Mac)
+.DS_Store
+Thumbs.db
+
+# Archivos de salida y seguridad (Evita subir APKs o llaves de firma)
+*.apk
+*.aab
+*.jks
+*.keystore
