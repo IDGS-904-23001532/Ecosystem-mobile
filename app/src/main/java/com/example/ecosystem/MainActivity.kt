@@ -45,6 +45,8 @@ import com.example.ecosystem.ui.theme.interSemiBold
 import com.example.ecosystem.ui.theme.interBold
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import com.example.ecosystem.ui.theme.colorTerciario
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -101,13 +103,19 @@ fun inicio() {
                     )
                 }
             }
+
+
             // La parte de la carta
             item {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = colorNeutral,
+                        contentColor = colorTerciario
+                    )
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp)
