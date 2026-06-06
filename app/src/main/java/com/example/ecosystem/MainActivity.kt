@@ -53,8 +53,6 @@ fun inicio() {
 
 }
 
-
-
 @Composable
 fun ImagenFondoDecorativa() {
     Box(modifier = Modifier.fillMaxSize()) {
