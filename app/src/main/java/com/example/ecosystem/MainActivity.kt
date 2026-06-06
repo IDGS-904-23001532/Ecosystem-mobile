@@ -1,5 +1,6 @@
 package com.example.ecosystem
 
+import android.R.attr.lineHeight
 import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -14,10 +15,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -39,7 +43,8 @@ import com.example.ecosystem.ui.theme.colorSecundario
 import com.example.ecosystem.ui.theme.interMedium
 import com.example.ecosystem.ui.theme.interSemiBold
 import com.example.ecosystem.ui.theme.interBold
-
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,6 +79,7 @@ fun inicio() {
 
         ImagenFondoDecorativa()
         LazyColumn() {
+            // La parte superior
             item {
 
                 Column(
@@ -95,9 +101,7 @@ fun inicio() {
                     )
                 }
             }
-
-
-
+            // La parte de la carta
             item {
                 Card(
                     modifier = Modifier
@@ -109,11 +113,38 @@ fun inicio() {
                         modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
-                            text = "Título de la tarjeta",
-                            style = MaterialTheme.typography.titleLarge
+                            text = "Bienvendo a " +
+                                    "EcoSystem",
+                            fontFamily = interBold,
+                            fontSize = 35.sp,
+                            lineHeight = 40.sp
+
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(text = "Este es el contenido principal de tu tarjeta utilizando Kotlin.")
+
+                        Spacer(modifier = Modifier.height(10.dp))
+                        // El boton
+                        Button(    onClick = { },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colorPrimario, // El color de fondo
+                            contentColor = colorNeutral      // El color del texto/icono
+                        )
+                        )
+
+                        {
+                            Text(text = "Empezar Ahora")
+
+                            // 1. Agregamos un pequeño espacio entre el texto y la flecha
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            // Es el icono de flecha
+                            Icon(
+                                painter = painterResource(id = R.drawable.flecha_correcta),
+                                contentDescription = "Flecha ir a inicio", // Descripción para accesibilidad
+                                modifier = Modifier.size(14.dp) // Puedes ajustar el tamaño de la flecha aquí
+                            )
+                        }
                     }
                 }
             }
