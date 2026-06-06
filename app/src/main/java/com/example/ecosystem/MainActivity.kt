@@ -36,7 +36,9 @@ import com.example.ecosystem.ui.theme.EcosystemTheme
 import com.example.ecosystem.ui.theme.colorNeutral
 import com.example.ecosystem.ui.theme.colorPrimario
 import com.example.ecosystem.ui.theme.colorSecundario
-import com.example.ecosystem.ui.theme.internormal
+import com.example.ecosystem.ui.theme.interMedium
+import com.example.ecosystem.ui.theme.interSemiBold
+import com.example.ecosystem.ui.theme.interBold
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,26 +63,34 @@ fun GreetingPreview() {
 
 @Composable
 fun inicio() {
+    Scaffold(
+        modifier = Modifier.fillMaxSize()
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues) // Al ponerlo aquí, el error desaparece
+        ) {
 
-    ImagenFondoDecorativa()
-    LazyColumn() {
-        item{
+        ImagenFondoDecorativa()
+        LazyColumn() {
+            item {
 
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(60.dp)
                         .background(colorNeutral)
-                ){
+                ) {
                     Text(
                         modifier = Modifier
                             .padding(15.dp)
-                            .align(alignment = Alignment.CenterHorizontally),
-                        text = "Ecosystem",
+                            .align(alignment = Alignment.Start),
+                        text = "EcoSystem",
                         style = TextStyle(
-                            fontSize = 16.sp,
+                            fontSize = 20.sp,
                             color = colorPrimario,
-                            fontFamily = internormal
+                            fontFamily = interSemiBold
                         )
                     )
                 }
@@ -88,25 +98,28 @@ fun inicio() {
 
 
 
-        item{
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    Text(text = "Título de la tarjeta", style = MaterialTheme.typography.titleLarge)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = "Este es el contenido principal de tu tarjeta utilizando Kotlin.")
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Título de la tarjeta",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = "Este es el contenido principal de tu tarjeta utilizando Kotlin.")
+                    }
                 }
             }
-
-
         }
     }
+}
 
 
 }
