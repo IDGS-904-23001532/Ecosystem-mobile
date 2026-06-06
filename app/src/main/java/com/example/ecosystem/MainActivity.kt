@@ -134,13 +134,13 @@ fun inicio() {
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(40.dp))
-                        Text(text = "Impulsa la energía solar y conecta con el consumo sustentable.",
+                        Text(text = "Monitorea la energía solar en tiempo real y impulsa el consumo sustentanble.",
                             fontFamily = interRegular,
-                            fontSize =  17.sp,
+                            fontSize =  18.sp,
                             color = botonGris,
                             textAlign = TextAlign.Center // lo alinie al centro por que se hizo mejor
                         )
-                        Spacer(modifier = Modifier.height(70.dp))
+                        Spacer(modifier = Modifier.height(58.dp))
                         // El boton
                         Button( modifier = Modifier.height(60.dp).width(300.dp),   onClick = { },
                         colors = ButtonDefaults.buttonColors(
@@ -160,7 +160,7 @@ fun inicio() {
                                 modifier = Modifier.size(14.dp) //  ajustar el tamaño de la flecha aquí
                             )
 
-                            Spacer(modifier = Modifier.height(32.dp))
+                            Spacer(modifier = Modifier.height(30.dp))
 
 
                         }
