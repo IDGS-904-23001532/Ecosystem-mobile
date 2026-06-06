@@ -45,7 +45,11 @@ import com.example.ecosystem.ui.theme.interSemiBold
 import com.example.ecosystem.ui.theme.interBold
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.text.style.TextAlign
+import com.example.ecosystem.ui.theme.botonGris
 import com.example.ecosystem.ui.theme.colorTerciario
+import com.example.ecosystem.ui.theme.interRegular
+import com.example.ecosystem.ui.theme.interthin
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -103,14 +107,14 @@ fun inicio() {
                     )
                 }
             }
-
-
             // La parte de la carta
             item {
+                Spacer(modifier = Modifier.height(340.dp))
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .height(390.dp)
+                        .padding(14.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = colorNeutral,
@@ -118,41 +122,54 @@ fun inicio() {
                     )
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp)
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
                             text = "Bienvendo a " +
                                     "EcoSystem",
                             fontFamily = interBold,
                             fontSize = 35.sp,
-                            lineHeight = 40.sp
-
+                            lineHeight = 40.sp,
+                            textAlign = TextAlign.Center
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = "Este es el contenido principal de tu tarjeta utilizando Kotlin.")
-
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(40.dp))
+                        Text(text = "Impulsa la energía solar y conecta con el consumo sustentable.",
+                            fontFamily = interRegular,
+                            fontSize =  17.sp,
+                            color = botonGris,
+                            textAlign = TextAlign.Center // lo alinie al centro por que se hizo mejor
+                        )
+                        Spacer(modifier = Modifier.height(70.dp))
                         // El boton
-                        Button(    onClick = { },
+                        Button( modifier = Modifier.height(60.dp).width(300.dp),   onClick = { },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = colorPrimario, // El color de fondo
                             contentColor = colorNeutral      // El color del texto/icono
-                        )
-                        )
+                        ))
 
                         {
                             Text(text = "Empezar Ahora")
 
-                            // 1. Agregamos un pequeño espacio entre el texto y la flecha
+                            //  aqui hice un pequeño espacio entre el texto y la flecha
                             Spacer(modifier = Modifier.width(8.dp))
-
                             // Es el icono de flecha
                             Icon(
                                 painter = painterResource(id = R.drawable.flecha_correcta),
                                 contentDescription = "Flecha ir a inicio", // Descripción para accesibilidad
-                                modifier = Modifier.size(14.dp) // Puedes ajustar el tamaño de la flecha aquí
+                                modifier = Modifier.size(14.dp) //  ajustar el tamaño de la flecha aquí
                             )
+
+                            Spacer(modifier = Modifier.height(32.dp))
+
+
                         }
+                        Text(text = "Unete a la comundad de los hogares sustentables",
+                            fontFamily = interRegular,
+                            fontSize =  10.sp,
+                            textAlign = TextAlign.Center, // lo alinie al centro por que se hizo mejor
+                            color = botonGris
+                        )
                     }
                 }
             }
@@ -160,10 +177,11 @@ fun inicio() {
     }
 }
 
-
+// Quiero dormir jajaj
 }
 
 
+// La funcion de la imagen que llamo al inicio()
 @Composable
 fun ImagenFondoDecorativa() {
     Box(modifier = Modifier.fillMaxSize()) {
