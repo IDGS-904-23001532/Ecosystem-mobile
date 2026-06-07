@@ -150,7 +150,12 @@ fun inicio() {
                         ))
 
                         {
-                            Text(text = "Empezar Ahora")
+                            Text(text = "Empezar Ahora",
+                                style = TextStyle(
+                                    fontSize = 16.sp
+
+                                )
+                            )
 
                             //  aqui hice un pequeño espacio entre el texto y la flecha
                             Spacer(modifier = Modifier.width(8.dp))
