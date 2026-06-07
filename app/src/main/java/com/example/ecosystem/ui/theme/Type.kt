@@ -9,15 +9,53 @@ import androidx.compose.ui.unit.sp
 import com.example.ecosystem.R
 
 
-val internormal = FontFamily(
-    Font(R.font.inter_thin, FontWeight.Normal)
+val interthin = FontFamily(
+    Font(R.font.inter_thin, FontWeight.Thin)
 )
+
+val interRegular = FontFamily(
+    Font(R.font.inter, FontWeight.Normal)
+)
+val interMedium = FontFamily(
+    Font(R.font.inter_medium, FontWeight.Medium)
+)
+val interSemiBold = FontFamily(
+    Font(R.font.inter_semibold, FontWeight.SemiBold)
+)
+
+val interBold = FontFamily(
+            Font(R.font.inter_bold, FontWeight.Bold))
+
+val InterFontFamily = FontFamily(
+    Font(R.font.inter_thin, FontWeight.Thin),
+    Font(R.font.inter, FontWeight.Normal),
+    Font(R.font.inter_medium, FontWeight.Medium),
+    Font(R.font.inter_semibold, FontWeight.SemiBold),
+    Font(R.font.inter_bold, FontWeight.Bold)
+)
+
+
 
 // Set of Material typography styles to start with
 val Typography = Typography(
     titleLarge = TextStyle(
-        fontFamily = internormal,
+        fontFamily = InterFontFamily,
         fontWeight = FontWeight.Normal,
+        fontSize = 18.sp
+    ),
+    titleMedium = TextStyle(
+        fontFamily = InterFontFamily,
+        fontWeight = FontWeight.Medium, // Compose buscará automáticamente 'inter_medium'
+        fontSize = 18.sp
+    ),
+    titleSmall = TextStyle(
+        fontFamily = InterFontFamily,
+        fontWeight = FontWeight.SemiBold, // Compose buscará automáticamente 'inter_semibold'
+        fontSize = 18.sp
+    ),
+    headlineMedium = TextStyle(
+        fontFamily = InterFontFamily,
+        fontWeight = FontWeight.Bold, // Compose buscará automáticamente 'inter_bold'
         fontSize = 18.sp
     ),
     bodyLarge = TextStyle(
