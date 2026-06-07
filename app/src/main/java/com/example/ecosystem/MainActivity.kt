@@ -45,6 +45,7 @@ import com.example.ecosystem.ui.theme.interSemiBold
 import com.example.ecosystem.ui.theme.interBold
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextAlign
 import com.example.ecosystem.ui.theme.botonGris
 import com.example.ecosystem.ui.theme.colorTerciario
@@ -80,7 +81,7 @@ fun inicio() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues) // Al ponerlo aquí, el error desaparece
+                .padding(paddingValues)
         ) {
 
         ImagenFondoDecorativa()
@@ -92,7 +93,7 @@ fun inicio() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(60.dp)
-                        .background(colorNeutral)
+                        .background(colorNeutral.copy(alpha = 0.86F))
                 ) {
                     Text(
                         modifier = Modifier
