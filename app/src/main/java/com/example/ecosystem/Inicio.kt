@@ -146,7 +146,7 @@ fun Barra(porcentaje: Int, dia: String) {
                 .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
                 .background(
                     when {
-                        porcentaje > 80 -> Color.Red
+                        porcentaje > 80 -> colorRojo
                         porcentaje > 60 -> colorNaranja
                         else -> colorPrimario
                     }
