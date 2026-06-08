@@ -27,4 +27,4 @@ val botonGris = Color(0xFF565E74)
 
 val botonRojo = Color(0xFFBA1A1A)
 
-
+val colorNaranja = Color(0xFFFF9800)

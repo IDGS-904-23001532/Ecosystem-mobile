@@ -147,8 +147,8 @@ fun Barra(porcentaje: Int, dia: String) {
                 .background(
                     when {
                         porcentaje > 80 -> Color.Red
-                        porcentaje > 60 -> Color(0xFFFF9800)
-                        else -> Color(0xFF4CAF50)
+                        porcentaje > 60 -> colorNaranja
+                        else -> colorPrimario
                     }
                 )
         )
