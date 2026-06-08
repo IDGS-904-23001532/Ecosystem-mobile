@@ -77,7 +77,6 @@ fun inicio() {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-
             ImagenFondoDecorativa()
             LazyColumn() {
                 // La parte superior
