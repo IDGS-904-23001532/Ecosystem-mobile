@@ -1,5 +1,6 @@
 package com.example.ecosystem
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -216,7 +218,28 @@ fun PantallaPanelSolar() {
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
+
+
+                val context = LocalContext.current
+
+                Button(
+                    onClick = {
+
+                        val intent = Intent(
+                            context,
+                            EstadoYMatenimiento::class.java
+                        )
+
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colorPrimario
+                    )
+                ) {
+                    Text("Ver mantenimiento")
+                }
+            }
             }
         }
     }
-}

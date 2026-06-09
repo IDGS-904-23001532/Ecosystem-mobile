@@ -25,6 +25,7 @@
         <activity android:name=".pantalla_principal"> </activity>
         <activity android:name=".Inicio"> </activity>
         <activity android:name=".PanelSolar"> </activity>
+        <activity android:name=".EstadoYMatenimiento"></activity>
     </application>
 
 </manifest>
