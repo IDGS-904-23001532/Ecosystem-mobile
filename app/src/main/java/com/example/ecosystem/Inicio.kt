@@ -19,6 +19,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ecosystem.ui.theme.*
+import android.content.Intent
+import androidx.compose.material3.Button
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material3.ButtonDefaults
 
 class Inicio : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -114,6 +118,28 @@ fun PantallaEstadisticas() {
                         FilaTabla("Luz", "6.2", "95%")
                         FilaTabla("Lavadora", "5.8", "89%")
                         FilaTabla("Licuadora", "4.9", "75%")
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        val context = LocalContext.current
+
+                        Button(
+                            onClick = {
+
+                                val intent = Intent(
+                                    context,
+                                    PanelSolar::class.java
+                                )
+
+                                context.startActivity(intent)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colorPrimario
+                            )
+                        ) {
+                            Text("Ver Panel Solar")
+                        }
                     }
                 }
             }
