@@ -30,8 +30,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.ecosystem.BateriaActivity
 import com.example.ecosystem.EstadoYMatenimiento
 import com.example.ecosystem.Login
+import com.example.ecosystem.PantallaBateria
 import com.example.ecosystem.PantallaEstadisticas
 import com.example.ecosystem.PantallaMantenimiento
 import com.example.ecosystem.PantallaPanelSolar
@@ -97,10 +99,10 @@ fun AppNavigation() {
                     icon = {
                         Icon(
                             imageVector = Icons.Default.BatteryChargingFull,
-                            contentDescription = "Login"
+                            contentDescription = "Bateria"
                         )
                     },
-                    label = { Text("Login") }
+                    label = { Text("Bateria") }
                 )
 
 
@@ -126,6 +128,8 @@ fun AppNavigation() {
                 0 -> PantallaEstadisticas()
 
                 1 -> PantallaPanelSolar()
+
+                2 -> PantallaBateria()
 
                 3 -> PantallaMantenimiento()
 

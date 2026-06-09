@@ -38,3 +38,9 @@ val TextoSecundario = Color(0xFF7A7A7A)
 val BordeCampo = Color(0xFFE1E4E8)
 val GrisPlaceholder = Color(0xFFB7B7B7)
 val BlancoTranslucido = Color(0xFFFDFDFD)
+
+
+val FondoTituloVerde = Color(0xFFDDF5E3)  // Verde muy pálido para el título "Batería"
+val FondoTarjetaInfo = Color(0xFFF4F7E6)  // Amarillo/Verde pálido para las tarjetas
+val GrisTrackBateria = Color(0xFFE8E8E8)  // Gris claro para el fondo del círculo
+val GrisTextoSecundario = Color(0xFFC4C4C4) // Gris para el texto "spent"
