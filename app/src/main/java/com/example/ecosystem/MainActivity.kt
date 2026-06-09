@@ -64,12 +64,18 @@ import com.example.ecosystem.ui.theme.interSemiBold
 import com.example.ecosystem.ui.theme.interBold
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextAlign
 import com.example.ecosystem.ui.theme.botonGris
 import com.example.ecosystem.ui.theme.colorTerciario
 import com.example.ecosystem.ui.theme.interRegular
 import com.example.ecosystem.ui.theme.interthin
+import com.example.ecosystem.Login
+import com.example.ecosystem.navigation.AppNavigation
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,42 +91,15 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun LoginScreen() {
-    val context = LocalContext.current
-    Scaffold(
-        modifier = Modifier.fillMaxSize()
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Pantalla de Login",
-                    style = TextStyle(
-                        fontSize = 28.sp,
-                        fontFamily = interBold,
-                        color = colorPrimario
-                    )
-                )
-                Spacer(modifier = Modifier.height(20.dp))
-                Text("Aquí va formulario de login")
-                Spacer(modifier = Modifier.height(40.dp))
-                Button(
-                    onClick = {
-                        val intent = Intent(
-                            context,
-                            pantalla_principal::class.java,
-                        )
-                        context.startActivity(intent)
-                    },
-                ) {
-                    Text("Inicio")
-                }
+    var sesionIniciada by remember { mutableStateOf(false) }
+
+    if (sesionIniciada) {
+        AppNavigation()
+    } else {
+        Login(
+            alIniciarSesionCorrectamente = {
+                sesionIniciada = true
             }
-        }
+        )
     }
 }

@@ -42,10 +42,12 @@ fun PantallaEstadisticas() {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Estadísticas") },
+                title = { Text("Estadísticas",
+                    fontFamily = interBold) },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = colorPrimario,
-                    titleContentColor = Color.White
+                    containerColor = colorNeutral,
+                    titleContentColor = TextoOscuro,
+
                 )
             )
         }

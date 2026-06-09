@@ -1,11 +1,12 @@
 package com.example.ecosystem
-
+import com.example.ecosystem.Login
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -44,6 +45,7 @@ import com.example.ecosystem.ui.theme.botonGris
 import com.example.ecosystem.ui.theme.colorTerciario
 import com.example.ecosystem.ui.theme.interRegular
 import kotlin.jvm.java
+import com.example.ecosystem.Login
 
 class pantalla_principal : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,8 +69,7 @@ fun GreetingPreview() {
 }
 
 @Composable
-fun inicio() {
-    val context = LocalContext.current
+fun inicio(alEmpezarAhora: () -> Unit = {}) {
     Scaffold(
         modifier = Modifier.fillMaxSize()
     ) { paddingValues ->
@@ -77,21 +78,29 @@ fun inicio() {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+
             ImagenFondoDecorativa()
             LazyColumn() {
                 // La parte superior
                 item {
 
-                    Column(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(60.dp)
-                            .background(colorNeutral.copy(alpha = 0.86F))
+                            .background(colorNeutral)
+                            .padding(horizontal = 15.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.logo_ecosystem),
+                            contentDescription = "Logo",
+                            modifier = Modifier.size(24.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
                         Text(
-                            modifier = Modifier
-                                .padding(15.dp)
-                                .align(alignment = Alignment.Start),
                             text = "EcoSystem",
                             style = TextStyle(
                                 fontSize = 20.sp,
@@ -103,11 +112,11 @@ fun inicio() {
                 }
                 // La parte de la carta
                 item {
-                    Spacer(modifier = Modifier.height(340.dp))
+                    Spacer(modifier = Modifier.height(300.dp))
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(390.dp)
+                            .height(400.dp)
                             .padding(14.dp),
                         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                         colors = CardDefaults.cardColors(
@@ -134,16 +143,11 @@ fun inicio() {
                                 color = botonGris,
                                 textAlign = TextAlign.Center // lo alinie al centro por que se hizo mejor
                             )
-                            Spacer(modifier = Modifier.height(58.dp))
+                            Spacer(modifier = Modifier.height(38.dp))
                             // El boton
+
                             Button( modifier = Modifier.height(60.dp).width(300.dp),
-                                onClick = {
-                                    val intent = Intent(
-                                        context,
-                                        Inicio::class.java,
-                                    )
-                                    context.startActivity(intent)
-                                },
+                                onClick = alEmpezarAhora,
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = colorPrimario, // El color de fondo
                                     contentColor = colorNeutral      // El color del texto/icono
@@ -185,8 +189,6 @@ fun inicio() {
 
 // Quiero dormir jajaj
 }
-
-
 // La funcion de la imagen que llamo al inicio()
 @Composable
 fun ImagenFondoDecorativa() {
