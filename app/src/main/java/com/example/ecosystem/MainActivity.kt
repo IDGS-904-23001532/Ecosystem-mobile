@@ -89,17 +89,42 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// LOGIN CON ANIMACION
 @Composable
 fun LoginScreen() {
-    var sesionIniciada by remember { mutableStateOf(false) }
 
-    if (sesionIniciada) {
-        AppNavigation()
-    } else {
-        Login(
-            alIniciarSesionCorrectamente = {
-                sesionIniciada = true
-            }
-        )
+    var sesionIniciada by remember {
+        mutableStateOf(false)
+    }
+
+    var cargando by remember {
+        mutableStateOf(false)
+    }
+
+    when {
+
+        cargando -> {
+
+            LoadingScreen(
+                alFinalizar = {
+                    cargando = false
+                    sesionIniciada = true
+                }
+            )
+        }
+
+        sesionIniciada -> {
+
+            AppNavigation()
+        }
+
+        else -> {
+
+            Login(
+                alIniciarSesionCorrectamente = {
+                    cargando = true
+                }
+            )
+        }
     }
 }
