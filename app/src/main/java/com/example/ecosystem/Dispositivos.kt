@@ -1,7 +1,8 @@
 package com.example.ecosystem
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
-import android.os.PersistableBundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -22,16 +23,14 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
-import androidx.compose.material3.*
-import androidx.compose.material3.SwitchColors
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.internal.enableLiveLiterals
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -40,8 +39,6 @@ import com.example.ecosystem.ui.theme.EcosystemTheme
 import com.example.ecosystem.ui.theme.FondoTarjetaInfo
 import com.example.ecosystem.ui.theme.FondoTituloVerde
 import com.example.ecosystem.ui.theme.VerdeEcoLogo
-import com.example.ecosystem.ui.theme.colorNeutral
-import com.example.ecosystem.ui.theme.colorPrimario
 
 class Dispositivos : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,6 +54,8 @@ class Dispositivos : ComponentActivity() {
 
 @Composable
 fun PantallaDispositivos() {
+    val context = LocalContext.current
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = Color.White
@@ -100,7 +99,7 @@ fun PantallaDispositivos() {
                     color = VerdeEcoLogo,
                     shape = RoundedCornerShape(20.dp),
                     modifier = Modifier
-                        .clickable { /*Accion*/ }
+                        .clickable { cambiarPantalla(context) }
                         .wrapContentSize()
                 ) {
                     Text(
@@ -190,4 +189,9 @@ fun TarjetaDispositivos(iconRes: Int, name: String, colorTarjeta: Color, colorIn
 
         }
     }
+}
+
+fun cambiarPantalla(context: Context) {
+    val intent = Intent(context, AgregarDispositivo::class.java)
+    context.startActivity(intent)
 }
