@@ -27,6 +27,7 @@
         <activity android:name=".PanelSolar"> </activity>
         <activity android:name=".EstadoYMatenimiento"></activity>
         <activity android:name=".BateriaActivity"></activity>
+        <activity android:name=".AgregarDispositivo"></activity>
     </application>
 
 </manifest>
