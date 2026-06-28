@@ -104,7 +104,7 @@ fun AppNavigation() {
                             contentDescription = "Bateria"
                         )
                     },
-                    label = { Text("Bateria") }
+                    label = { Text("BateriaResizable (Experimental) is already running as process 29912.") }
                 )
 
 
