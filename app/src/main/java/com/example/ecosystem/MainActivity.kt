@@ -84,6 +84,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             EcosystemTheme {
                 LoginScreen()
+               // PantallaControlCasa()
             }
         }
     }

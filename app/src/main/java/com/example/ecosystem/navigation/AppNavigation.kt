@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.CardTravel
+import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.SolarPower
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,6 +35,7 @@ import com.example.ecosystem.BateriaActivity
 import com.example.ecosystem.EstadoYMatenimiento
 import com.example.ecosystem.Login
 import com.example.ecosystem.PantallaBateria
+import com.example.ecosystem.PantallaDispositivos
 import com.example.ecosystem.PantallaEstadisticas
 import com.example.ecosystem.PantallaMantenimiento
 import com.example.ecosystem.PantallaPanelSolar
@@ -102,7 +104,7 @@ fun AppNavigation() {
                             contentDescription = "Bateria"
                         )
                     },
-                    label = { Text("Bateria") }
+                    label = { Text("BateriaResizable (Experimental) is already running as process 29912.") }
                 )
 
 
@@ -116,6 +118,18 @@ fun AppNavigation() {
                         )
                     },
                     label =  {Text("Matenimiento")}
+                )
+
+                NavigationBarItem(
+                    selected = pantalla == 4,
+                    onClick = { pantalla = 4 },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Devices,
+                            contentDescription = "Dispositivos"
+                        )
+                    },
+                    label = { Text("Dispositivos") }
                 )
             }
         }
@@ -133,7 +147,7 @@ fun AppNavigation() {
 
                 3 -> PantallaMantenimiento()
 
-
+                4 -> PantallaDispositivos()
 
 
             }

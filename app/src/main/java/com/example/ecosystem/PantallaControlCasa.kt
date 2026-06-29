@@ -74,7 +74,7 @@ fun PantallaControlCasa() {
             item {
 
                 Image(
-                    painter = painterResource(id = R.drawable.ic_house_background),
+                    painter = painterResource(id = R.drawable.ic_house_backgroud),
                     contentDescription = "Control del Hogar",
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
