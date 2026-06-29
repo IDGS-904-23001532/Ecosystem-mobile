@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ecosystem.ui.theme.colorPrimario
 import com.example.ecosystem.ui.theme.interBold
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +36,16 @@ fun PantallaControlCasa() {
 
     // Cuenta dispositivos activos solo si el sistema está encendido
     val dispositivosActivos = if (sistemaEncendido.value) {
+        // Estos estados se actualizarán cuando se conecte MQTT.
+        var estadoConexion by remember { mutableStateOf("Esperando...") }
+        var consumoActual by remember { mutableStateOf("-- kWh") }
+        var mayorConsumo by remember { mutableStateOf("--") }
+
+        // Punto donde posteriormente se realizará toda la conexión MQTT.
+        LaunchedEffect(Unit) {
+            // TODO: Inicializar MQTT y comenzar a recibir datos.
+        }
+
         listOf(
             seleccionFocos.value != "Apagado",
             seleccionGaraje.value != "Cerrado",
@@ -260,7 +271,7 @@ fun PantallaControlCasa() {
                             Spacer(modifier = Modifier.height(6.dp))
                             // TODO: reemplazar con dato real de MQTT
                             Text(
-                                text = "-- kWh",
+                                text = consumoActual,
                                 fontSize = 20.sp,
                                 fontFamily = interBold
                             )
@@ -280,7 +291,7 @@ fun PantallaControlCasa() {
                             Spacer(modifier = Modifier.height(6.dp))
                             // TODO: reemplazar con dato real de MQTT
                             Text(
-                                text = "--",
+                                text = mayorConsumo,
                                 fontSize = 16.sp,
                                 fontFamily = interBold
                             )
@@ -330,7 +341,7 @@ fun PantallaControlCasa() {
                             Spacer(modifier = Modifier.height(6.dp))
                             // TODO: reemplazar con estado real de conexión MQTT
                             Text(
-                                text = "Esperando...",
+                                text = estadoConexion,
                                 fontSize = 16.sp,
                                 fontFamily = interBold
                             )
