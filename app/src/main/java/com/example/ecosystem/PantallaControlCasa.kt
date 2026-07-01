@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.sp
 import com.example.ecosystem.ui.theme.colorPrimario
 import com.example.ecosystem.ui.theme.interBold
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::cmlass)
 @Composable
 fun PantallaControlCasa() {
 
