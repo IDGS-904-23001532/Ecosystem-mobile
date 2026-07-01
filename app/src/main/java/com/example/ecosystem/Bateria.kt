@@ -8,21 +8,20 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ecosystem.ui.theme.EcosystemTheme
 import com.example.ecosystem.ui.theme.FondoTarjetaInfo
 import com.example.ecosystem.ui.theme.FondoTituloVerde
@@ -30,6 +29,83 @@ import com.example.ecosystem.ui.theme.GrisTextoSecundario
 import com.example.ecosystem.ui.theme.GrisTrackBateria
 import com.example.ecosystem.ui.theme.colorPrimario
 import com.example.ecosystem.ui.theme.interBold
+import com.google.gson.annotations.SerializedName
+import kotlinx.coroutines.launch
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+
+// --- 1. MODELOS DE DATOS Y RETROFIT ---
+
+data class BateriaResponse(
+    val status: String,
+    val data: BateriaData?
+)
+
+data class BateriaData(
+    @SerializedName("porcentaje_bateria") val porcentajeBateria: Float,
+    @SerializedName("energia_consumida_wh") val energiaConsumida: Float,
+    @SerializedName("energia_generada_wh") val energiaGenerada: Float,
+    @SerializedName("carga_neta_wh") val cargaNeta: Float,
+    // Usamos String porque la API manda el número de horas o el texto "No está cargando..."
+    @SerializedName("tiempo_estimado_carga_horas") val tiempoCarga: String
+)
+
+interface ApiService {
+    // Reemplaza "vendingbox.online" o tu IP local de Flask (ej. "http://192.168.1.X:9000/")
+    @GET("api/estado_bateria")
+    suspend fun getEstadoBateria(): BateriaResponse
+}
+
+object RetrofitClient {
+    // Si pruebas en el emulador apuntando a tu compu local, usa "http://10.0.2.2:9000/"
+    // Si ya está en tu servidor, pon la URL base real.
+    private const val BASE_URL = "https://iqr5la0iykml.shares.zrok.io/"
+
+    val apiService: ApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ApiService::class.java)
+    }
+}
+
+// --- 2. VIEWMODEL PARA MANEJAR EL ESTADO ---
+
+class BateriaViewModel : ViewModel() {
+    var bateriaData by mutableStateOf<BateriaData?>(null)
+        private set
+    var isLoading by mutableStateOf(true)
+        private set
+    var errorMessage by mutableStateOf<String?>(null)
+        private set
+
+    init {
+        fetchDatosBateria()
+    }
+
+    fun fetchDatosBateria() {
+        viewModelScope.launch {
+            isLoading = true
+            errorMessage = null
+            try {
+                val response = RetrofitClient.apiService.getEstadoBateria()
+                if (response.status == "success") {
+                    bateriaData = response.data
+                } else {
+                    errorMessage = "Error en la respuesta del servidor"
+                }
+            } catch (e: Exception) {
+                errorMessage = "Error de conexión: ${e.message}"
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+}
+
+// --- 3. UI ACTUALIZADA ---
 
 class BateriaActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,12 +119,14 @@ class BateriaActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaBateria() {
-    Scaffold(
+fun PantallaBateria(viewModel: BateriaViewModel = viewModel()) {
+    val data = viewModel.bateriaData
+    val isLoading = viewModel.isLoading
+    val errorMessage = viewModel.errorMessage
 
-        containerColor = Color.White // Fondo blanco limpio general
+    Scaffold(
+        containerColor = Color.White
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -58,17 +136,16 @@ fun PantallaBateria() {
             item {
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Título "Batería" estilo píldora
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth(0.85f) // No ocupa todo el ancho
+                            .fillMaxWidth(0.85f)
                             .background(
                                 color = FondoTituloVerde,
-                                shape = RoundedCornerShape(30.dp) // Bordes muy redondeados
+                                shape = RoundedCornerShape(30.dp)
                             )
                             .padding(vertical = 16.dp),
                         contentAlignment = Alignment.Center
@@ -85,64 +162,79 @@ fun PantallaBateria() {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp) // Padding general de la pantalla
+                        .padding(horizontal = 24.dp)
                 ) {
                     Spacer(modifier = Modifier.height(40.dp))
 
-                    // Indicador de carga circular
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularBatteryIndicator(percentage = 0.45f)
-                    }
+                    if (isLoading) {
+                        Box(modifier = Modifier.fillMaxWidth().height(220.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = colorPrimario)
+                        }
+                    } else if (errorMessage != null) {
+                        Box(modifier = Modifier.fillMaxWidth().height(220.dp), contentAlignment = Alignment.Center) {
+                            Text(text = errorMessage, color = Color.Red, textAlign = TextAlign.Center)
+                            Button(onClick = { viewModel.fetchDatosBateria() }, modifier = Modifier.padding(top = 16.dp)) {
+                                Text("Reintentar")
+                            }
+                        }
+                    } else if (data != null) {
+                        // Pasamos el porcentaje real (ej. 45.0 a 0.45f)
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularBatteryIndicator(percentage = data.porcentajeBateria / 100f)
+                        }
 
-                    Spacer(modifier = Modifier.height(50.dp))
+                        Spacer(modifier = Modifier.height(50.dp))
 
-                    // Sección Información
-                    Text(
-                        text = "Información",
-                        fontSize = 22.sp,
-                        fontFamily = interBold,
-                        color = Color.Black
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // Cuadrícula de tarjetas de información
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        InfoCard(
-                            label = "Estimar el completado de\ntiempo de carga", // Salto de línea como en mockup
-                            value = "10 H",
-                            modifier = Modifier.weight(1f)
+                        Text(
+                            text = "Información",
+                            fontSize = 22.sp,
+                            fontFamily = interBold,
+                            color = Color.Black
                         )
-                        InfoCard(
-                            label = "Promedio de carga",
-                            value = "40 %",
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        InfoCard(
-                            label = "Estado",
-                            value = "Alimentación Solar\nActiva", // Salto de línea
-                            modifier = Modifier.weight(1f),
-                            isMediumValue = true
-                        )
-                        InfoCard(
-                            label = "Consumo Neto",
-                            value = "0.45",
-                            modifier = Modifier.weight(1f)
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            // Validamos si trae un número o el string de que no está cargando
+                            val tiempoFormateado = data.tiempoCarga.toDoubleOrNull()?.let { "$it H" } ?: "N/A"
+
+                            InfoCard(
+                                label = "Estimar el completado de\ntiempo de carga",
+                                value = tiempoFormateado,
+                                modifier = Modifier.weight(1f)
+                            )
+                            InfoCard(
+                                label = "Promedio de carga",
+                                value = "${data.porcentajeBateria.toInt()} %",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            val estadoSolar = if (data.cargaNeta > 0) "Alimentación Solar\nActiva" else "Descargando"
+                            InfoCard(
+                                label = "Estado",
+                                value = estadoSolar,
+                                modifier = Modifier.weight(1f),
+                                isMediumValue = true
+                            )
+                            InfoCard(
+                                label = "Consumo Neto",
+                                value = "${data.cargaNeta} Wh",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(30.dp))
@@ -161,19 +253,17 @@ fun CircularBatteryIndicator(
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier.size(220.dp) // Círculo un poco más grande
+        modifier = modifier.size(220.dp)
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val strokeWidth = 4.dp.toPx() // Grosor mucho más fino para igualar la imagen
+            val strokeWidth = 4.dp.toPx()
 
-            // 1. Fondo del círculo (Gris claro)
             drawCircle(
                 color = GrisTrackBateria,
                 radius = size.minDimension / 2 - strokeWidth / 2,
                 style = Stroke(width = strokeWidth)
             )
 
-            // 2. Arco de progreso (Verde)
             drawArc(
                 color = colorPrimario,
                 startAngle = -90f,
@@ -181,10 +271,8 @@ fun CircularBatteryIndicator(
                 useCenter = false,
                 style = Stroke(width = strokeWidth)
             )
-            // No agregamos el punto indicador superior porque el mockup actual no lo tiene
         }
 
-        // Texto central
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
@@ -192,12 +280,14 @@ fun CircularBatteryIndicator(
             Text(
                 text = "${(percentage * 100).toInt()}%",
                 fontSize = 32.sp,
-                fontWeight = FontWeight.Medium, // No tan negrita como antes
+                fontWeight = FontWeight.Medium,
                 color = colorPrimario
             )
             Spacer(modifier = Modifier.height(4.dp))
+            // Calculamos el gastado para la etiqueta de abajo
+            val gastado = 100 - (percentage * 100).toInt()
             Text(
-                text = "65% spent",
+                text = "$gastado% spent",
                 fontSize = 12.sp,
                 color = GrisTextoSecundario,
                 textAlign = TextAlign.Center
@@ -216,8 +306,8 @@ fun InfoCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(140.dp), // Altura fija para que todas sean del mismo tamaño
-        shape = RoundedCornerShape(20.dp), // Bordes más suaves/redondos
+            .height(140.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = FondoTarjetaInfo
         ),
@@ -227,13 +317,13 @@ fun InfoCard(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.Center, // Centrar contenido verticalmente
+            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.Start
         ) {
             Text(
                 text = label,
                 fontSize = 12.sp,
-                color = Color.Black, // Textos negros en lugar de grises
+                color = Color.Black,
                 fontWeight = FontWeight.SemiBold,
                 lineHeight = 14.sp
             )
@@ -242,7 +332,7 @@ fun InfoCard(
 
             Text(
                 text = value,
-                fontSize = if (isMediumValue) 14.sp else 26.sp, // Diferencia de tamaño para el texto de Estado
+                fontSize = if (isMediumValue) 14.sp else 26.sp,
                 fontFamily = interBold,
                 color = Color.Black
             )
