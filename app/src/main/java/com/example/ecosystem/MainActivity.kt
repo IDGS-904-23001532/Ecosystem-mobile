@@ -70,16 +70,41 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextAlign
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import com.example.ecosystem.Bateria.BateriaWorker
 import com.example.ecosystem.ui.theme.botonGris
 import com.example.ecosystem.ui.theme.colorTerciario
 import com.example.ecosystem.ui.theme.interRegular
 import com.example.ecosystem.ui.theme.interthin
 import com.example.ecosystem.Login
 import com.example.ecosystem.navigation.AppNavigation
+import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // 1. Crear el canal de notificaciones (Solo se crea una vez, el sistema lo ignora si ya existe)
+        crearCanalNotificacion(
+            context = this,
+            idCanal = "canal_bateria",
+            nombre = "Estado de Batería",
+            descripcion = "Notificaciones periódicas del estado del sistema solar"
+        )
+
+        // 2. Configurar la tarea periódica (Mínimo 15 minutos)
+        val bateriaWorkRequest = PeriodicWorkRequestBuilder<BateriaWorker>(
+            15, TimeUnit.MINUTES // ¡Recuerda, 15 es el mínimo!
+        ).build()
+
+        // 3. Encolar el trabajo asegurando que no se duplique si abren la app varias veces
+        WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
+            "VerificacionBateria",
+            ExistingPeriodicWorkPolicy.KEEP, // KEEP evita reiniciar el temporizador si ya está corriendo
+            bateriaWorkRequest
+        )
+
         enableEdgeToEdge()
         setContent {
             EcosystemTheme {

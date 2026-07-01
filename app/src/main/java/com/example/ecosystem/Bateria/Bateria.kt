@@ -1,4 +1,4 @@
-package com.example.ecosystem
+package com.example.ecosystem.Bateria
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -60,7 +60,7 @@ interface ApiService {
 object RetrofitClient {
     // Si pruebas en el emulador apuntando a tu compu local, usa "http://10.0.2.2:9000/"
     // Si ya está en tu servidor, pon la URL base real.
-    private const val BASE_URL = "https://iqr5la0iykml.shares.zrok.io/"
+    private const val BASE_URL = "https://ecosystem-python-production.up.railway.app//"
 
     val apiService: ApiService by lazy {
         Retrofit.Builder()

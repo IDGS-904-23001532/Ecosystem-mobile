@@ -1,6 +1,5 @@
 package com.example.ecosystem.navigation
 
-import android.graphics.drawable.Icon
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -31,10 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.ecosystem.BateriaActivity
-import com.example.ecosystem.EstadoYMatenimiento
-import com.example.ecosystem.Login
-import com.example.ecosystem.PantallaBateria
+import com.example.ecosystem.Bateria.PantallaBateria
 import com.example.ecosystem.PantallaDispositivos
 import com.example.ecosystem.PantallaEstadisticas
 import com.example.ecosystem.PantallaMantenimiento
@@ -108,17 +104,17 @@ fun AppNavigation() {
                 )
 
 
-                NavigationBarItem(
-                    selected = pantalla == 3,
-                    onClick = { pantalla = 3},
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.CardTravel,
-                            contentDescription = "Matenimiento"
-                        )
-                    },
-                    label =  {Text("Matenimiento")}
-                )
+//                NavigationBarItem(
+//                    selected = pantalla == 3,
+//                    onClick = { pantalla = 3},
+//                    icon = {
+//                        Icon(
+//                            imageVector = Icons.Default.CardTravel,
+//                            contentDescription = "Matenimiento"
+//                        )
+//                    },
+//                    label =  {Text("Matenimiento")}
+//                )
 
                 NavigationBarItem(
                     selected = pantalla == 4,
