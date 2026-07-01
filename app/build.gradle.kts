@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.ecosystem"
-    compileSdk = 36   // ✅ CAMBIADO
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.ecosystem"
@@ -37,6 +37,13 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/io.netty.versions.properties"
+        }
+    }
 }
 
 dependencies {
@@ -63,6 +70,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
+    implementation("com.hivemq:hivemq-mqtt-client:1.3.3")
     implementation("androidx.navigation:navigation-compose:2.7.7")
     // dependencias de retrofit para consumir API
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
