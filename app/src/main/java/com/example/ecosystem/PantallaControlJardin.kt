@@ -1,6 +1,5 @@
 package com.example.ecosystem
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,18 +13,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ecosystem.ui.theme.EcosystemTheme
-import com.example.ecosystem.ui.theme.TextoOscuro
-import com.example.ecosystem.ui.theme.colorNeutral
 import com.example.ecosystem.ui.theme.colorPrimario
 import com.example.ecosystem.ui.theme.interBold
 
 class PantallaControlJardin : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -36,39 +32,16 @@ class PantallaControlJardin : ComponentActivity() {
         }
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ControlJardin() {
+fun ControlJardin(viewModel: JardinViewModel = viewModel()) {
 
-    // Estados de control del jardin con MQTT
-    // control-sistema: Habilita/Deshabilita el funcionamiento automático del ESP32
-    var sistemaActivo by remember { mutableStateOf(false) }
-// Campo: Valor_Humedad_Suelo (decimal) -> Actualizado dinámicamente por el topic "valor-humedad"
-    var valorHumedadSuelo by remember { mutableStateOf("34.50 %") }
-
-    // Campo: Bomba_Riego_Activa (tinyint) -> Muestra si el actuador/relevador está encendido (Lógica invertida LOW en ESP32)
-    var bombaRiegoActiva by remember { mutableStateOf(false) }
-
-    // Variable local para manejar el UMBRAL_HUMEDAD_MINIMA del ESP32 mediante la interfaz
-    var umbralHumedadMinima by remember { mutableStateOf("30%") }
     val opcionesUmbral = listOf("20%", "30%", "40%", "50%")
     var expandedUmbral by remember { mutableStateOf(false) }
 
-    // Campo: Duracion_Riego_Segundos (int) -> Almacena el tiempo del último ciclo completado
-    var duracionRiegoSegundos by remember { mutableStateOf("12 segundos") }
-
-    // Campo: Estado_Sincronizacion (tinyint) y Fecha_Captura_Local (timestamp)
-    var estadoSincronizacion by remember { mutableStateOf("Sincronizado...") }
-    var fechaCapturaLocal by remember { mutableStateOf("2026-07-01 11:42:05") }
-    /*
-         * INTERCONEXIÓN MQTT EN ANDROID:
-         * Al recibir un mensaje en el topic "valor-humedad", actualizas `valorHumedadSuelo`.
-         * Cuando el Switch de "Control Sistema" cambie, publicas "1" o "0" en "control-sistema".
-         */
-
     Scaffold(
         topBar = {
-            // Barra superior centrada con título
             CenterAlignedTopAppBar(
                 title = {
                     Text(
@@ -90,8 +63,6 @@ fun ControlJardin() {
         ) {
 
             item {
-
-                // Imagen de Cabecera adaptada al formato de tu ecosistema
                 Image(
                     painter = painterResource(id = R.drawable.bomba_riego),
                     contentDescription = "Monitoreo del Huerto",
@@ -104,60 +75,35 @@ fun ControlJardin() {
                 Spacer(modifier = Modifier.height(20.dp))
 
                 // --- SECCIÓN 1: ESTADO MAESTRO DEL ARDUINO ---
-                Text(
-                    text = "Estado del Sistema",
-                    fontSize = 20.sp,
-                    fontFamily = interBold,
-                    color = colorPrimario
-                )
-
+                Text(text = "Estado del Sistema", fontSize = 20.sp, fontFamily = interBold, color = colorPrimario)
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Switch(
-                        checked = sistemaActivo,
+                        checked = viewModel.sistemaActivo,
                         onCheckedChange = { encendido ->
-                            sistemaActivo = encendido
-                            if (!encendido) {
-                                bombaRiegoActiva = false
-                                valorHumedadSuelo = "-- %"
-                                duracionRiegoSegundos = "0 seg"
-                            } else {
-                                // Valores de recuperación simulados
-                                valorHumedadSuelo = "34.50 %"
-                                duracionRiegoSegundos = "12 seg"
-                            }
-                            // ACCIÓN MQTT: Publicar en topic "control-sistema" -> si es true "1", si es false "0"
+                            viewModel.alternarSistema(encendido)
                         }
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = if (sistemaActivo) "Estado Activo" else "Estado de Ahorro",
+                        text = if (viewModel.sistemaActivo) "Estado Activo" else "Estado de Ahorro",
                         fontSize = 16.sp,
-                        color = if (sistemaActivo) Color.Unspecified else Color.Gray
+                        color = if (viewModel.sistemaActivo) Color.Unspecified else Color.Gray
                     )
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // --- SECCIÓN 2: CUADRÍCULA DE TARJETAS 2x2 (CAMPOS DB + MQTT) ---
-                Text(
-                    text = "Dispositivos y Parámetros IoT",
-                    fontSize = 20.sp,
-                    fontFamily = interBold,
-                    color = colorPrimario
-                )
-
+                // --- SECCIÓN 2: CUADRÍCULA DE TARJETAS IoT ---
+                Text(text = "Dispositivos y Parámetros IoT", fontSize = 20.sp, fontFamily = interBold, color = colorPrimario)
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Fila Superior: Bomba de Riego (Bomba_Riego_Activa) | Humedad del Suelo (Valor_Humedad_Suelo)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Tarjeta 1 - Actuador Relevador (Bomba_Riego_Activa)
+                    // Tarjeta 1 - Bomba de Agua
                     Card(
                         modifier = Modifier.weight(1f),
                         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -166,24 +112,24 @@ fun ControlJardin() {
                             Text(text = "Bomba de Agua", fontSize = 11.sp, color = Color.Gray)
                             Spacer(modifier = Modifier.height(8.dp))
                             Switch(
-                                checked = bombaRiegoActiva,
-                                enabled = sistemaActivo,
+                                checked = viewModel.bombaRiegoActiva,
+                                enabled = viewModel.sistemaActivo,
                                 onCheckedChange = { activa ->
-                                    bombaRiegoActiva = activa
-                                    // Nota: Modifica el comportamiento o envía un override al pin 2 (ACTUADOR)
+                                    val payload = if (activa) "1" else "0"
+                                    viewModel.publicarMensaje("estado-bomba", payload)
                                 }
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = if (bombaRiegoActiva) "Regando" else "Apagada",
+                                text = if (viewModel.bombaRiegoActiva) "Regando" else "Apagada",
                                 fontSize = 15.sp,
                                 fontFamily = interBold,
-                                color = if (bombaRiegoActiva) colorPrimario else Color.Unspecified
+                                color = if (viewModel.bombaRiegoActiva) colorPrimario else Color.Unspecified
                             )
                         }
                     }
 
-                    // Tarjeta 2 - Sensor Higrómetro (Valor_Humedad_Suelo / Topic: valor-humedad)
+                    // Tarjeta 2 - Humedad del Suelo
                     Card(
                         modifier = Modifier.weight(1f),
                         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -192,7 +138,7 @@ fun ControlJardin() {
                             Text(text = "Humedad Suelo", fontSize = 11.sp, color = Color.Gray)
                             Spacer(modifier = Modifier.height(20.dp))
                             Text(
-                                text = valorHumedadSuelo,
+                                text = viewModel.valorHumedadSuelo,
                                 fontSize = 22.sp,
                                 fontFamily = interBold
                             )
@@ -204,12 +150,11 @@ fun ControlJardin() {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Fila Inferior: Selector de Umbral Mínimo | Registro de Telemetría (Tarjeta Amarilla)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Tarjeta 3 - Configuración de Regla (UMBRAL_HUMEDAD_MINIMA)
+                    // Tarjeta 3 - Umbral Mínimo
                     Card(
                         modifier = Modifier.weight(1f),
                         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -220,12 +165,12 @@ fun ControlJardin() {
 
                             Box {
                                 OutlinedButton(
-                                    onClick = { if (sistemaActivo) expandedUmbral = true },
-                                    enabled = sistemaActivo,
+                                    onClick = { if (viewModel.sistemaActivo) expandedUmbral = true },
+                                    enabled = viewModel.sistemaActivo,
                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                                     modifier = Modifier.height(36.dp)
                                 ) {
-                                    Text(umbralHumedadMinima, fontSize = 11.sp)
+                                    Text(viewModel.umbralHumedadMinima, fontSize = 11.sp)
                                 }
                                 DropdownMenu(
                                     expanded = expandedUmbral,
@@ -235,9 +180,8 @@ fun ControlJardin() {
                                         DropdownMenuItem(
                                             text = { Text(opcion) },
                                             onClick = {
-                                                umbralHumedadMinima = opcion
+                                                viewModel.umbralHumedadMinima = opcion
                                                 expandedUmbral = false
-                                                // Aquí se enviaría el nuevo umbral al ESP32 si expandes tu protocolo MQTT
                                             }
                                         )
                                     }
@@ -248,7 +192,7 @@ fun ControlJardin() {
                         }
                     }
 
-                    // Tarjeta 4 - Consolidación de Base de Datos (Focalizado en Amarillo 0xFFFFD600)
+                    // Tarjeta 4 - Consolidación Telemetría (Depurador DB)
                     Card(
                         modifier = Modifier.weight(1f),
                         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -258,20 +202,20 @@ fun ControlJardin() {
                             Text(text = "Último Evento", fontSize = 11.sp, color = Color.Black)
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Duración: $duracionRiegoSegundos",
+                                text = "Duración: ${viewModel.duracionRiegoSegundos}",
                                 fontSize = 16.sp,
                                 fontFamily = interBold,
                                 color = Color.Black
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = fechaCapturaLocal,
+                                text = viewModel.fechaCapturaLocal,
                                 fontSize = 10.sp,
                                 color = Color.DarkGray
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = estadoSincronizacion,
+                                text = viewModel.estadoSincronizacion,
                                 fontSize = 11.sp,
                                 color = Color.Black,
                                 fontFamily = interBold
@@ -279,7 +223,6 @@ fun ControlJardin() {
                         }
                     }
                 }
-
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
