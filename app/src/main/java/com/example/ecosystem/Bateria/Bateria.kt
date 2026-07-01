@@ -43,12 +43,14 @@ data class BateriaResponse(
 )
 
 data class BateriaData(
-    @SerializedName("porcentaje_bateria") val porcentajeBateria: Float,
-    @SerializedName("energia_consumida_wh") val energiaConsumida: Float,
-    @SerializedName("energia_generada_wh") val energiaGenerada: Float,
-    @SerializedName("carga_neta_wh") val cargaNeta: Float,
-    // Usamos String porque la API manda el número de horas o el texto "No está cargando..."
-    @SerializedName("tiempo_estimado_carga_horas") val tiempoCarga: String
+    @SerializedName("id_dispositivo") val idDispositivo: Int?,
+    @SerializedName("voltaje_v") val voltajeV: Double?,
+    @SerializedName("corriente_a") val corrienteA: Double?,
+    @SerializedName("potencia_w") val potenciaW: Double?,
+    @SerializedName("porcentaje_bateria") val porcentajeBateria: Double?,
+    @SerializedName("fecha_registro") val fechaRegistro: String?,
+    @SerializedName("tipo_estimacion") val tipoEstimacion: String?,
+    @SerializedName("tiempo_estimado_horas") val tiempoEstimadoHoras: Double?
 )
 
 interface ApiService {
@@ -179,14 +181,26 @@ fun PantallaBateria(viewModel: BateriaViewModel = viewModel()) {
                         }
                     } else if (data != null) {
                         // Pasamos el porcentaje real (ej. 45.0 a 0.45f)
+                        val porcentajeBateria = data.porcentajeBateria?.toFloat() ?: 0f
                         Box(
                             modifier = Modifier.fillMaxWidth(),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularBatteryIndicator(percentage = data.porcentajeBateria / 100f)
+                            CircularBatteryIndicator(percentage = porcentajeBateria / 100f)
                         }
 
-                        Spacer(modifier = Modifier.height(50.dp))
+                        data.fechaRegistro?.let { fecha ->
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = "Último registro: $fecha",
+                                fontSize = 12.sp,
+                                color = GrisTextoSecundario,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(40.dp))
 
                         Text(
                             text = "Información",
@@ -201,17 +215,17 @@ fun PantallaBateria(viewModel: BateriaViewModel = viewModel()) {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            // Validamos si trae un número o el string de que no está cargando
-                            val tiempoFormateado = data.tiempoCarga.toDoubleOrNull()?.let { "$it H" } ?: "N/A"
+                            val voltaje = data.voltajeV?.let { "$it V" } ?: "N/A"
+                            val corriente = data.corrienteA?.let { "$it A" } ?: "N/A"
 
                             InfoCard(
-                                label = "Estimar el completado de\ntiempo de carga",
-                                value = tiempoFormateado,
+                                label = "Voltaje",
+                                value = voltaje,
                                 modifier = Modifier.weight(1f)
                             )
                             InfoCard(
-                                label = "Promedio de carga",
-                                value = "${data.porcentajeBateria.toInt()} %",
+                                label = "Corriente",
+                                value = corriente,
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -222,16 +236,18 @@ fun PantallaBateria(viewModel: BateriaViewModel = viewModel()) {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            val estadoSolar = if (data.cargaNeta > 0) "Alimentación Solar\nActiva" else "Descargando"
+                            val potencia = data.potenciaW?.let { "$it W" } ?: "N/A"
+                            val tiempoFormateado = data.tiempoEstimadoHoras?.let { "$it H" } ?: "N/A"
+                            val tipoEstimacion = data.tipoEstimacion ?: "Tiempo estimado"
+
                             InfoCard(
-                                label = "Estado",
-                                value = estadoSolar,
-                                modifier = Modifier.weight(1f),
-                                isMediumValue = true
+                                label = "Potencia",
+                                value = potencia,
+                                modifier = Modifier.weight(1f)
                             )
                             InfoCard(
-                                label = "Consumo Neto",
-                                value = "${data.cargaNeta} Wh",
+                                label = tipoEstimacion,
+                                value = tiempoFormateado,
                                 modifier = Modifier.weight(1f)
                             )
                         }

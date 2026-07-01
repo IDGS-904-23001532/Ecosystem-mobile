@@ -4,6 +4,8 @@ import android.R.attr.lineHeight
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.os.Build
+import android.content.pm.PackageManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
@@ -85,6 +87,14 @@ import java.util.concurrent.TimeUnit
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Solicitar permiso de notificaciones en Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
+            }
+        }
+
         // 1. Crear el canal de notificaciones (Solo se crea una vez, el sistema lo ignora si ya existe)
         crearCanalNotificacion(
             context = this,

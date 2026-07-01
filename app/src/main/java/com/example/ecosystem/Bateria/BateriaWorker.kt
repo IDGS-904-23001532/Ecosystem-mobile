@@ -16,13 +16,15 @@ class BateriaWorker(context: Context, params: WorkerParameters) : CoroutineWorke
                 val data = response.data
 
                 // 2. Preparamos los textos de la notificación con los datos reales
-                val titulo = "Batería: ${data.porcentajeBateria.toInt()}%"
-                val mensajeCorto = "Consumo Neto: ${data.cargaNeta} Wh"
+                val porcentaje = data.porcentajeBateria?.toInt() ?: 0
+                val titulo = "Batería: $porcentaje%"
+                val mensajeCorto = "Potencia: ${data.potenciaW ?: 0f} W"
                 val mensajeDetalle = """
                     Estado de tu Ecosistema:
-                    • Energía Generada: ${data.energiaGenerada} Wh
-                    • Energía Consumida: ${data.energiaConsumida} Wh
-                    • Tiempo de carga estimado: ${data.tiempoCarga} H
+                    • Voltaje: ${data.voltajeV ?: 0f} V
+                    • Corriente: ${data.corrienteA ?: 0f} A
+                    • Potencia: ${data.potenciaW ?: 0f} W
+                    • ${data.tipoEstimacion ?: "Estimación"}: ${data.tiempoEstimadoHoras ?: 0f} H
                 """.trimIndent()
 
                 // 3. Llamamos a tu función de notificación
