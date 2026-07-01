@@ -188,6 +188,8 @@ fun inicio(alEmpezarAhora: () -> Unit = {}) {
     }
 
 // Quiero dormir jajaj
+
+//jijijiji io tmb bro 
 }
 // La funcion de la imagen que llamo al inicio()
 @Composable
