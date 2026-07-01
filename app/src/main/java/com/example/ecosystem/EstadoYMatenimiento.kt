@@ -1,5 +1,9 @@
 package com.example.ecosystem
+
 import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,7 +24,10 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,20 +36,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.view.WindowCompat.enableEdgeToEdge
 import com.example.ecosystem.ui.theme.EcosystemTheme
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.ui.text.TextStyle
 import com.example.ecosystem.ui.theme.botonGris
 import com.example.ecosystem.ui.theme.colorNeutral
 import com.example.ecosystem.ui.theme.colorPrimario
 import com.example.ecosystem.ui.theme.colorRojo
 import com.example.ecosystem.ui.theme.colorSecundario
+import com.example.ecosystem.ui.theme.interBold
 import com.example.ecosystem.ui.theme.interSemiBold
 
 class EstadoYMatenimiento : ComponentActivity() {
@@ -58,47 +62,40 @@ class EstadoYMatenimiento : ComponentActivity() {
     }
 }
 
-
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaMantenimiento() {
-    // 1. DEFINICIÓN DE COLORES PERSONALIZADOS (Basados en tu imagen)
-    val colorFondoBadge = Color(0xFFE2F4E8) // Verde muy clarito
-
-
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color.White // Fondo general blanco
-    ) {
+    Scaffold(
+        topBar = {
+            // Barra superior idéntica al formato de Control Jardín
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = "Estado y Mantenimiento",
+                        fontSize = 22.sp,
+                        fontFamily = interBold,
+                        color = colorPrimario
+                    )
+                }
+            )
+        }
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 32.dp),
+                .padding(paddingValues)
+                .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // --- TOP BADGE (Estado y Mantenimiento) ---
-            Surface(
-                color = colorNeutral,
-                shape = RoundedCornerShape(20.dp), // Esquinas bien redondeadas
-                modifier = Modifier.padding(top = 16.dp)
-            ) {
-                Text(
-                    text = "Estado y Mantenimiento",
-                    color = colorPrimario,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // --- TÍTULO PRINCIPAL ---
             Text(
                 text = "Estado General del Sistema",
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp
+                fontSize = 20.sp,
+                color = colorPrimario
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -114,7 +111,6 @@ fun PantallaMantenimiento() {
             Spacer(modifier = Modifier.height(24.dp))
 
             // --- LISTA DE CHEQUEO ---
-            // Usamos un Column alineado a la izquierda para la listita
             Column(horizontalAlignment = Alignment.Start) {
                 ItemChequeo(texto = "Módulos solares", colorIcono = colorPrimario)
                 ItemChequeo(texto = "Inversor", colorIcono = colorPrimario)
@@ -127,9 +123,10 @@ fun PantallaMantenimiento() {
             Text(
                 text = "Historial",
                 fontSize = 20.sp,
-                modifier = Modifier.align(Alignment.Start), // Esto lo empuja a la izquierda
+                color = colorPrimario,
+                modifier = Modifier.align(Alignment.Start),
                 style = TextStyle(
-                fontFamily = interSemiBold
+                    fontFamily = interSemiBold
                 )
             )
 
@@ -156,16 +153,13 @@ fun PantallaMantenimiento() {
                 }
             }
 
-            // Un Spacer para empujar para abajo
+            // Spacer para empujar el contenido hacia arriba de forma proporcional
             Spacer(modifier = Modifier.weight(1f))
-
-
         }
     }
 }
 
-// --- "MINI-FUNCIONES" PARA REUTILIZAR DISEÑO ---
-// Esto le encantará al profe, demuestra que sabes reutilizar componentes en Compose
+// --- "MINI-FUNCIONES" REUTILIZABLES ---
 
 @Composable
 fun ItemChequeo(texto: String, colorIcono: Color) {

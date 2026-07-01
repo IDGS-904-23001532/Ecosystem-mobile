@@ -24,31 +24,40 @@ import androidx.compose.material3.Button
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.ButtonDefaults
 
+/*
+ * Actividad principal que muestra la pantalla de Estadísticas de consumo energético.
+ */
 class Inicio : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableEdgeToEdge() // Habilita el modo edge-to-edge (pantalla completa)
         setContent {
-            EcosystemTheme {
+            EcosystemTheme { //Aplica el tema definido en la aplicación
                 PantallaEstadisticas()
             }
         }
     }
 }
 
+/*
+ * Composables principal que representa la pantalla de Estadísticas.
+ * Contiene un gráfico de barras semanal y una tabla detallada de consumo.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaEstadisticas() {
     Scaffold(
         topBar = {
+            // Barra superior centrada con título
             CenterAlignedTopAppBar(
-                title = { Text("Estadísticas",
-                    fontFamily = interBold) },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = colorNeutral,
-                    titleContentColor = TextoOscuro,
-
-                )
+                title = {
+                    Text(
+                        "Estadísticas",
+                        fontSize = 22.sp,
+                        fontFamily = interBold,
+                        color = colorPrimario
+                    )
+                }
             )
         }
     ) { paddingValues ->
@@ -58,6 +67,8 @@ fun PantallaEstadisticas() {
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
+
+            // Sección: Consumo semanal
             item {
                 Text(
                     text = "Consumo Semanal",
@@ -89,6 +100,8 @@ fun PantallaEstadisticas() {
                     Barra(75, "D")
                 }
             }
+
+            // Sección: Detalle por día
             item { Spacer(modifier = Modifier.height(24.dp)) }
             item {
                 Text(
@@ -125,6 +138,7 @@ fun PantallaEstadisticas() {
 
                         val context = LocalContext.current
 
+                        // Botón para navegar a la pantalla del Panel Solar
                         Button(
                             onClick = {
 
@@ -149,6 +163,9 @@ fun PantallaEstadisticas() {
     }
 }
 
+/**
+* Composable que representa una barra individual del gráfico semanal.
+*/
 @Composable
 fun Barra(porcentaje: Int, dia: String) {
     val alturaMaxima = 180.dp
@@ -188,7 +205,9 @@ fun Barra(porcentaje: Int, dia: String) {
         )
     }
 }
-
+/**
+ * Composable que representa una fila de la tabla de detalle.
+ */
 @Composable
 fun FilaTabla(dispositivo: String, consumo: String, porcentaje: String) {
     Row(

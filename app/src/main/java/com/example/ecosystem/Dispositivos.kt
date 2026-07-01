@@ -21,6 +21,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -39,6 +42,8 @@ import com.example.ecosystem.ui.theme.EcosystemTheme
 import com.example.ecosystem.ui.theme.FondoTarjetaInfo
 import com.example.ecosystem.ui.theme.FondoTituloVerde
 import com.example.ecosystem.ui.theme.VerdeEcoLogo
+import com.example.ecosystem.ui.theme.colorPrimario
+import com.example.ecosystem.ui.theme.interBold
 
 class Dispositivos : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,41 +57,32 @@ class Dispositivos : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaDispositivos() {
     val context = LocalContext.current
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color.White
-    ) {
+    Scaffold(
+        topBar = {
+            // Barra superior con formato uniforme e idéntico a Control Jardín
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = "Dispositivos",
+                        fontSize = 22.sp,
+                        fontFamily = interBold,
+                        color = colorPrimario
+                    )
+                }
+            )
+        }
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(paddingValues)
                 .padding(horizontal = 24.dp, vertical = 10.dp)
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Titulo
-                Surface(
-                    color = FondoTituloVerde,
-                    shape = RoundedCornerShape(30.dp),
-                    modifier = Modifier
-                        .padding(top = 16.dp)
-                        .wrapContentWidth()
-                        .padding(horizontal = 20.dp)
-                ) {
-                    Text(
-                        text = "Dispositivos",
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 25.sp,
-                        modifier = Modifier.padding(vertical = 16.dp, horizontal = 45.dp)
-                    )
-                }
-            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -116,7 +112,7 @@ fun PantallaDispositivos() {
 
             Text(
                 text = "Tus dispositivos",
-                color = Color.Black,
+                color = colorPrimario,
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
                 modifier = Modifier.align(Alignment.Start)
@@ -186,7 +182,6 @@ fun TarjetaDispositivos(iconRes: Int, name: String, colorTarjeta: Color, colorIn
                     checkedThumbColor = Color.White
                 )
             )
-
         }
     }
 }

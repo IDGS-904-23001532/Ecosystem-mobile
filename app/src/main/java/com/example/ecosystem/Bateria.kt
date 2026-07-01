@@ -47,8 +47,19 @@ class BateriaActivity : ComponentActivity() {
 @Composable
 fun PantallaBateria() {
     Scaffold(
-
-        containerColor = Color.White // Fondo blanco limpio general
+        topBar = {
+            // Barra superior idéntica en formato a Control Jardín
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = "Batería",
+                        fontSize = 22.sp,
+                        fontFamily = interBold,
+                        color = colorPrimario
+                    )
+                }
+            )
+        }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -56,38 +67,12 @@ fun PantallaBateria() {
                 .padding(paddingValues)
         ) {
             item {
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Título "Batería" estilo píldora
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.85f) // No ocupa todo el ancho
-                            .background(
-                                color = FondoTituloVerde,
-                                shape = RoundedCornerShape(30.dp) // Bordes muy redondeados
-                            )
-                            .padding(vertical = 16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Batería",
-                            fontSize = 24.sp,
-                            fontFamily = interBold,
-                            color = Color.Black
-                        )
-                    }
-                }
-
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp) // Padding general de la pantalla
                 ) {
-                    Spacer(modifier = Modifier.height(40.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
 
                     // Indicador de carga circular
                     Box(
@@ -104,7 +89,7 @@ fun PantallaBateria() {
                         text = "Información",
                         fontSize = 22.sp,
                         fontFamily = interBold,
-                        color = Color.Black
+                        color = colorPrimario
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
@@ -115,7 +100,7 @@ fun PantallaBateria() {
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         InfoCard(
-                            label = "Estimar el completado de\ntiempo de carga", // Salto de línea como en mockup
+                            label = "Estimar el completado de\ntiempo de carga",
                             value = "10 H",
                             modifier = Modifier.weight(1f)
                         )
@@ -134,7 +119,7 @@ fun PantallaBateria() {
                     ) {
                         InfoCard(
                             label = "Estado",
-                            value = "Alimentación Solar\nActiva", // Salto de línea
+                            value = "Alimentación Solar\nActiva",
                             modifier = Modifier.weight(1f),
                             isMediumValue = true
                         )
@@ -161,10 +146,10 @@ fun CircularBatteryIndicator(
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier.size(220.dp) // Círculo un poco más grande
+        modifier = modifier.size(220.dp)
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val strokeWidth = 4.dp.toPx() // Grosor mucho más fino para igualar la imagen
+            val strokeWidth = 4.dp.toPx()
 
             // 1. Fondo del círculo (Gris claro)
             drawCircle(
@@ -181,7 +166,6 @@ fun CircularBatteryIndicator(
                 useCenter = false,
                 style = Stroke(width = strokeWidth)
             )
-            // No agregamos el punto indicador superior porque el mockup actual no lo tiene
         }
 
         // Texto central
@@ -192,7 +176,7 @@ fun CircularBatteryIndicator(
             Text(
                 text = "${(percentage * 100).toInt()}%",
                 fontSize = 32.sp,
-                fontWeight = FontWeight.Medium, // No tan negrita como antes
+                fontWeight = FontWeight.Medium,
                 color = colorPrimario
             )
             Spacer(modifier = Modifier.height(4.dp))
@@ -216,8 +200,8 @@ fun InfoCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(140.dp), // Altura fija para que todas sean del mismo tamaño
-        shape = RoundedCornerShape(20.dp), // Bordes más suaves/redondos
+            .height(140.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = FondoTarjetaInfo
         ),
@@ -227,13 +211,13 @@ fun InfoCard(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.Center, // Centrar contenido verticalmente
+            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.Start
         ) {
             Text(
                 text = label,
                 fontSize = 12.sp,
-                color = Color.Black, // Textos negros en lugar de grises
+                color = Color.Black,
                 fontWeight = FontWeight.SemiBold,
                 lineHeight = 14.sp
             )
@@ -242,7 +226,7 @@ fun InfoCard(
 
             Text(
                 text = value,
-                fontSize = if (isMediumValue) 14.sp else 26.sp, // Diferencia de tamaño para el texto de Estado
+                fontSize = if (isMediumValue) 14.sp else 26.sp,
                 fontFamily = interBold,
                 color = Color.Black
             )
