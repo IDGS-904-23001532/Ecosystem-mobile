@@ -71,4 +71,7 @@ dependencies {
     // esta libreria es para que la app pueda ejecutar actividades en segundo
     // plano cada cierto tiempo
     implementation("androidx.work:work-runtime-ktx:2.9.0")
+    
+    // MQTT Paho Client
+    implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
 }

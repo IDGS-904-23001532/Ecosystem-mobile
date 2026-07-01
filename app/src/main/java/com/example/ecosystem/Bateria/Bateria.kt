@@ -57,6 +57,9 @@ interface ApiService {
     // Reemplaza "vendingbox.online" o tu IP local de Flask (ej. "http://192.168.1.X:9000/")
     @GET("api/estado_bateria")
     suspend fun getEstadoBateria(): BateriaResponse
+
+    @GET("api/consumo_bateria_semana")
+    suspend fun getConsumoBateriaSemana(): com.example.ecosystem.ConsumoSemanalResponse
 }
 
 object RetrofitClient {
