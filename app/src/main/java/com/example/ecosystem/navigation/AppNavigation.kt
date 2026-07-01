@@ -1,7 +1,6 @@
 package com.example.ecosystem.navigation
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -9,48 +8,52 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryChargingFull
-import androidx.compose.material.icons.filled.CardTravel
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.SolarPower
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.example.ecosystem.Bateria.PantallaBateria
 import com.example.ecosystem.PantallaDispositivos
 import com.example.ecosystem.PantallaEstadisticas
-import com.example.ecosystem.PantallaMantenimiento
 import com.example.ecosystem.PantallaPanelSolar
 import com.example.ecosystem.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigation() {
-    var pantalla by remember { mutableStateOf(0) }
+
+    val navController = rememberNavController()
+
+    val backStack =
+        navController.currentBackStackEntryAsState()
+
+    val currentRoute =
+        backStack.value?.destination?.route
 
     Scaffold(
+
         topBar = {
+
             TopAppBar(
+
                 title = {
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+
                         Image(
-                            painter = painterResource(id = R.drawable.logo_ecosystem),
+                            painter = painterResource(R.drawable.logo_ecosystem),
                             contentDescription = "Logo",
                             modifier = Modifier.size(40.dp)
                         )
@@ -61,92 +64,109 @@ fun AppNavigation() {
                             text = "EcoSystem",
                             fontWeight = FontWeight.Bold
                         )
+
                     }
+
                 }
+
             )
+
         },
+
         bottomBar = {
+
             NavigationBar {
+
                 NavigationBarItem(
-                    selected = pantalla == 0,
-                    onClick = { pantalla = 0 },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Home,
-                            contentDescription = "Inicio"
-                        )
+                    selected = currentRoute == "inicio",
+                    onClick = {
+                        navController.navigate("inicio") {
+                            launchSingleTop = true
+                        }
                     },
-                    label = { Text("Inicio") }
+                    icon = {
+                        Icon(Icons.Default.Home, null)
+                    },
+                    label = {
+                        Text("Inicio")
+                    }
                 )
 
                 NavigationBarItem(
-                    selected = pantalla == 1,
-                    onClick = { pantalla = 1 },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.SolarPower,
-                            contentDescription = "Panel Solar"
-                        )
+                    selected = currentRoute == "panel",
+                    onClick = {
+                        navController.navigate("panel") {
+                            launchSingleTop = true
+                        }
                     },
-                    label = { Text("Panel") }
+                    icon = {
+                        Icon(Icons.Default.SolarPower, null)
+                    },
+                    label = {
+                        Text("Panel")
+                    }
                 )
 
                 NavigationBarItem(
-                    selected = pantalla == 2,
-                    onClick = { pantalla = 2 },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.BatteryChargingFull,
-                            contentDescription = "Bateria"
-                        )
+                    selected = currentRoute == "bateria",
+                    onClick = {
+                        navController.navigate("bateria") {
+                            launchSingleTop = true
+                        }
                     },
-                    label = { Text("Bateria") }
+                    icon = {
+                        Icon(Icons.Default.BatteryChargingFull, null)
+                    },
+                    label = {
+                        Text("Batería")
+                    }
                 )
-
-
-//                NavigationBarItem(
-//                    selected = pantalla == 3,
-//                    onClick = { pantalla = 3},
-//                    icon = {
-//                        Icon(
-//                            imageVector = Icons.Default.CardTravel,
-//                            contentDescription = "Matenimiento"
-//                        )
-//                    },
-//                    label =  {Text("Matenimiento")}
-//                )
 
                 NavigationBarItem(
-                    selected = pantalla == 4,
-                    onClick = { pantalla = 4 },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Devices,
-                            contentDescription = "Dispositivos"
-                        )
+                    selected = currentRoute == "dispositivos",
+                    onClick = {
+                        navController.navigate("dispositivos") {
+                            launchSingleTop = true
+                        }
                     },
-                    label = { Text("Dispositivos") }
+                    icon = {
+                        Icon(Icons.Default.Devices, null)
+                    },
+                    label = {
+                        Text("Dispositivos")
+                    }
                 )
+
             }
-        }
-    ) { paddingValues ->
 
-        Box(
-            modifier = Modifier.padding(paddingValues)
+        }
+
+    ) { padding ->
+
+        NavHost(
+            navController = navController,
+            startDestination = "inicio",
+            modifier = Modifier.padding(padding)
         ) {
-            when (pantalla) {
-                0 -> PantallaEstadisticas()
 
-                1 -> PantallaPanelSolar()
-
-                2 -> PantallaBateria()
-
-                3 -> PantallaMantenimiento()
-
-                4 -> PantallaDispositivos()
-
-
+            composable("inicio") {
+                PantallaEstadisticas()
             }
+
+            composable("panel") {
+                PantallaPanelSolar()
+            }
+
+            composable("bateria") {
+                PantallaBateria()
+            }
+
+            composable("dispositivos") {
+                PantallaDispositivos()
+            }
+
         }
+
     }
+
 }

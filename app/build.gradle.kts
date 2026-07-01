@@ -40,6 +40,7 @@ android {
 }
 
 dependencies {
+    implementation("androidx.navigation:navigation-compose:2.9.0")
     implementation("com.airbnb.android:lottie-compose:6.6.7") // PANTALLA DE CARGA LOOTIE
     implementation("androidx.compose.material:material-icons-extended")
     implementation(platform(libs.androidx.compose.bom))

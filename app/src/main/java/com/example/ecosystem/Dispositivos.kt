@@ -21,6 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ecosystem.Jardin.ControlJardin
+import com.example.ecosystem.Jardin.PantallaControlJardin
 import com.example.ecosystem.ui.theme.EcosystemTheme
 import com.example.ecosystem.ui.theme.FondoTarjetaInfo
 import com.example.ecosystem.ui.theme.FondoTituloVerde
@@ -115,8 +117,8 @@ fun PantallaDispositivos() {
                     colorBoton = VerdeEcoLogo,
                     modifier = Modifier.weight(1f),
                     onConectarClick = {
-                        //val intent = Intent(context, JardinActivity::class.java)
-                        //context.startActivity(intent)
+                        val intent = Intent(context, PantallaControlJardin::class.java)
+                        context.startActivity(intent)
                     }
                 )
             }
