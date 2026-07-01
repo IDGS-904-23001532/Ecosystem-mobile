@@ -1,5 +1,6 @@
 package com.example.ecosystem
 
+import android.content.Context
 import android.widget.Toast
 import androidx.activity.result.launch
 import androidx.compose.foundation.Image
@@ -74,6 +75,8 @@ import com.example.ecosystem.ui.theme.TextoOscuro
 import com.example.ecosystem.ui.theme.TextoSecundario
 import com.example.ecosystem.ui.theme.VerdeEco
 import com.example.ecosystem.ui.theme.VerdeEcoLogo
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import kotlinx.coroutines.launch
 
 
@@ -252,11 +255,25 @@ fun PantallaInicioSesion(
     alIniciarSesion: () -> Unit,
     alRegistrarse: () -> Unit
 ) {
-    var correo by remember { mutableStateOf("") }
-    var contrasena by remember { mutableStateOf("") }
+
+    val context = LocalContext.current
+    // Acceso a SharedPreferences we
+    val sharedPref = remember { context.getSharedPreferences("login_prefs", Context.MODE_PRIVATE) }
+
+    var correo by remember {
+        mutableStateOf(sharedPref.getString("correo", "") ?: "")
+    }
+
+    var contrasena by remember {
+        mutableStateOf(sharedPref.getString("pass", "") ?: "")
+    }
+
+    var recordar by remember {
+        mutableStateOf(sharedPref.getBoolean("recordar", false))
+    }
+
     var mostrarContrasena by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
 
     Column(
         modifier = Modifier.fillMaxSize().background(FondoLogin).systemBarsPadding().imePadding()
@@ -280,6 +297,7 @@ fun PantallaInicioSesion(
             shape = RoundedCornerShape(16.dp)
         )
         Spacer(modifier = Modifier.height(15.dp))
+
         OutlinedTextField(
             value = contrasena, onValueChange = { contrasena = it },
             modifier = Modifier.fillMaxWidth(),
@@ -293,6 +311,31 @@ fun PantallaInicioSesion(
             },
             shape = RoundedCornerShape(16.dp)
         )
+
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = recordar,
+                onCheckedChange = { recordar = it },
+                colors = CheckboxDefaults.colors(
+                    checkedColor = VerdeEco
+                )
+            )
+
+            Text(
+                text = "Recordar mis datos",
+                color = TextoSecundario,
+                fontSize = 14.sp,
+                modifier = Modifier.clickable {
+                    recordar = !recordar
+                }
+            )
+        }
         Spacer(modifier = Modifier.height(30.dp))
 
         Button(
@@ -303,6 +346,19 @@ fun PantallaInicioSesion(
                     scope.launch {
                         val res = DatabaseHelper.loginUser(correo, contrasena)
                         if (res.getString("res") == "success") {
+
+                            val editor = sharedPref.edit()
+
+                            if (recordar) {
+                                editor.putString("correo", correo)
+                                editor.putString("pass", contrasena)
+                                editor.putBoolean("recordar", true)
+                            } else {
+                                editor.clear()
+                            }
+
+                            editor.apply()
+
                             val mensajeBienvenida = res.getString("msg")
                             Toast.makeText(context, mensajeBienvenida, Toast.LENGTH_SHORT).show()
                             alIniciarSesion()
