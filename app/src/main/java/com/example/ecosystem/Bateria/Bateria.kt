@@ -53,6 +53,24 @@ data class BateriaData(
     @SerializedName("tiempo_estimado_horas") val tiempoEstimadoHoras: Double?
 )
 
+data class LecturaResponse(
+    val status: String,
+    val data: LecturaData?
+)
+
+data class LecturaData(
+    @SerializedName("id_lectura") val idLectura: Int?,
+    @SerializedName("id_dispositivo") val idDispositivo: Int?,
+    @SerializedName("id_modo") val idModo: Int?,
+    @SerializedName("voltaje_v") val voltajeV: Double?,
+    @SerializedName("corriente_a") val corrienteA: Double?,
+    @SerializedName("energia_generada_wh") val energiaGeneradaWh: Double?,
+    @SerializedName("angulo_panel") val anguloPanel: String?,
+    @SerializedName("alerta_generada") val alertaGenerada: Int?,
+    @SerializedName("tipo_alerta") val tipoAlerta: String?,
+    @SerializedName("fecha_registro") val fechaRegistro: String?
+)
+
 interface ApiService {
     // Reemplaza "vendingbox.online" o tu IP local de Flask (ej. "http://192.168.1.X:9000/")
     @GET("api/estado_bateria")
@@ -60,6 +78,9 @@ interface ApiService {
 
     @GET("api/consumo_bateria_semana")
     suspend fun getConsumoBateriaSemana(): com.example.ecosystem.ConsumoSemanalResponse
+
+    @GET("api/guardar_lectura")
+    suspend fun getUltimaLectura(): LecturaResponse
 }
 
 object RetrofitClient {
