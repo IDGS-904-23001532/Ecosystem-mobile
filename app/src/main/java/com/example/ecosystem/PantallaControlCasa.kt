@@ -23,7 +23,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.nio.charset.StandardCharsets.UTF_8
 
-@OptIn(ExperimentalMaterial3Api::cmlass)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaControlCasa() {
 
@@ -45,7 +45,7 @@ fun PantallaControlCasa() {
     // CLIENTE MQTT
     var client by remember { mutableStateOf<Mqtt5AsyncClient?>(null) }
 
-    val host = "96642097c1d94aed9589f163592aae4a.s1.eu.hivemq.cloud"
+    val host = "2c475eb27a4845ad8904f6e355ee7f6d.s1.eu.hivemq.cloud"
     val port = 8883
     val username = "kevax"
     val password = "Minombre123"
