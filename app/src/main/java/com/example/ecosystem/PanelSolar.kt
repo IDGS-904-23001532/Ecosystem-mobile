@@ -81,7 +81,8 @@ fun PantallaPanelSolar() {
                 Text(
                     text = "Estado",
                     fontSize = 20.sp,
-                    fontFamily = interBold
+                    fontFamily = interBold,
+                    color = colorPrimario
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -106,7 +107,8 @@ fun PantallaPanelSolar() {
                 Text(
                     text = "Información",
                     fontSize = 20.sp,
-                    fontFamily = interBold
+                    fontFamily = interBold,
+                    color = colorPrimario
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))

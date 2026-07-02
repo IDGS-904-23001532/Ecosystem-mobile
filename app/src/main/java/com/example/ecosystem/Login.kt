@@ -1,5 +1,8 @@
 package com.example.ecosystem
 
+import android.content.Context
+import android.widget.Toast
+import androidx.activity.result.launch
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,6 +45,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +53,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -60,6 +65,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ecosystem.servicios.DatabaseHelper
 import com.example.ecosystem.ui.theme.BordeCampo
 import com.example.ecosystem.ui.theme.BlancoTranslucido
 import com.example.ecosystem.ui.theme.EcosystemTheme
@@ -69,6 +75,10 @@ import com.example.ecosystem.ui.theme.TextoOscuro
 import com.example.ecosystem.ui.theme.TextoSecundario
 import com.example.ecosystem.ui.theme.VerdeEco
 import com.example.ecosystem.ui.theme.VerdeEcoLogo
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import kotlinx.coroutines.launch
+
 
 enum class PantallaLogin {
     BIENVENIDA,
@@ -85,29 +95,17 @@ fun Login(
 
     Box(modifier = modifier.fillMaxSize()) {
         when (pantallaActual) {
-            PantallaLogin.BIENVENIDA -> PantallaLoginPrincipal(
-                alEmpezarAhora = {
-                    pantallaActual = PantallaLogin.INICIAR_SESION
-                }
+            PantallaLogin.BIENVENIDA -> PantallaBienvenida(
+                alEmpezarAhora = { pantallaActual = PantallaLogin.INICIAR_SESION }
             )
-
             PantallaLogin.INICIAR_SESION -> PantallaInicioSesion(
-                alVolver = {
-                    pantallaActual = PantallaLogin.BIENVENIDA
-                },
+                alVolver = { pantallaActual = PantallaLogin.BIENVENIDA },
                 alIniciarSesion = alIniciarSesionCorrectamente,
-                alRegistrarse = {
-                    pantallaActual = PantallaLogin.REGISTRAR
-                }
+                alRegistrarse = { pantallaActual = PantallaLogin.REGISTRAR }
             )
-
             PantallaLogin.REGISTRAR -> PantallaRegistro(
-                alVolver = {
-                    pantallaActual = PantallaLogin.INICIAR_SESION
-                },
-                alRegistrarse = {
-                    pantallaActual = PantallaLogin.INICIAR_SESION
-                }
+                alVolver = { pantallaActual = PantallaLogin.INICIAR_SESION },
+                alRegistrarse = { pantallaActual = PantallaLogin.INICIAR_SESION }
             )
         }
     }
@@ -237,6 +235,8 @@ fun PantallaBienvenida(
         }
     }
 }
+
+
 @Composable
 fun PantallaLoginPrincipal(
     alEmpezarAhora: () -> Unit
@@ -246,254 +246,144 @@ fun PantallaLoginPrincipal(
         inicio(alEmpezarAhora = alEmpezarAhora)
     }
 }
+
+
+
 @Composable
 fun PantallaInicioSesion(
     alVolver: () -> Unit,
     alIniciarSesion: () -> Unit,
     alRegistrarse: () -> Unit
 ) {
-    var correo by remember { mutableStateOf("") }
-    var contrasena by remember { mutableStateOf("") }
+
+    val context = LocalContext.current
+    // Acceso a SharedPreferences we
+    val sharedPref = remember { context.getSharedPreferences("login_prefs", Context.MODE_PRIVATE) }
+
+    var correo by remember {
+        mutableStateOf(sharedPref.getString("correo", "") ?: "")
+    }
+
+    var contrasena by remember {
+        mutableStateOf(sharedPref.getString("pass", "") ?: "")
+    }
+
+    var recordar by remember {
+        mutableStateOf(sharedPref.getBoolean("recordar", false))
+    }
+
     var mostrarContrasena by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(FondoLogin)
-            .systemBarsPadding()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 20.dp),
+        modifier = Modifier.fillMaxSize().background(FondoLogin).systemBarsPadding().imePadding()
+            .verticalScroll(rememberScrollState()).padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(18.dp))
-
-        Box(
-            modifier = Modifier
-                .size(78.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .background(VerdeEcoLogo),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo_ecosystem),
-                contentDescription = "Logo EcoSystem",
-                modifier = Modifier.size(38.dp)
-            )
+        Spacer(modifier = Modifier.height(20.dp))
+        // Logo
+        Box(modifier = Modifier.size(70.dp).clip(RoundedCornerShape(20.dp)).background(VerdeEcoLogo), contentAlignment = Alignment.Center) {
+            Image(painter = painterResource(id = R.drawable.logo_ecosystem), contentDescription = null, modifier = Modifier.size(35.dp))
         }
+        Text("EcoSystem", color = VerdeEco, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(40.dp))
 
-        Spacer(modifier = Modifier.height(16.dp))
+        // Campos
+        OutlinedTextField(
+            value = correo, onValueChange = { correo = it },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Correo electrónico") },
+            leadingIcon = { Icon(Icons.Outlined.Email, null) },
+            shape = RoundedCornerShape(16.dp)
+        )
+        Spacer(modifier = Modifier.height(15.dp))
 
-        Text(
-            text = "EcoSystem",
-            color = VerdeEco,
-            fontSize = 26.sp,
-            fontWeight = FontWeight.Bold
+        OutlinedTextField(
+            value = contrasena, onValueChange = { contrasena = it },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Contraseña") },
+            visualTransformation = if (mostrarContrasena) VisualTransformation.None else PasswordVisualTransformation(),
+            leadingIcon = { Icon(Icons.Outlined.Lock, null) },
+            trailingIcon = {
+                IconButton(onClick = { mostrarContrasena = !mostrarContrasena }) {
+                    Icon(if (mostrarContrasena) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff, null)
+                }
+            },
+            shape = RoundedCornerShape(16.dp)
         )
 
-        Text(
-            text = "Gestión energética inteligente",
-            color = TextoSecundario,
-            fontSize = 14.sp
-        )
 
-        Spacer(modifier = Modifier.height(34.dp))
-
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .widthIn(max = 420.dp)
+                .padding(vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Iniciar sesión",
-                color = TextoOscuro,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold
+            Checkbox(
+                checked = recordar,
+                onCheckedChange = { recordar = it },
+                colors = CheckboxDefaults.colors(
+                    checkedColor = VerdeEco
+                )
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
-
             Text(
-                text = "Bienvenido de nuevo a tu centro de control solar.",
+                text = "Recordar mis datos",
                 color = TextoSecundario,
                 fontSize = 14.sp,
-                lineHeight = 20.sp
+                modifier = Modifier.clickable {
+                    recordar = !recordar
+                }
             )
-
-            Spacer(modifier = Modifier.height(30.dp))
-
-            Text(
-                text = "Correo electrónico",
-                color = TextoOscuro,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = correo,
-                onValueChange = { correo = it },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                placeholder = {
-                    Text(
-                        text = "ejemplo@correo.com",
-                        color = GrisPlaceholder
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Email,
-                        contentDescription = "Correo",
-                        tint = GrisPlaceholder
-                    )
-                },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = BordeCampo,
-                    unfocusedBorderColor = BordeCampo,
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    cursorColor = VerdeEco
-                )
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Contraseña",
-                    color = TextoOscuro,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                Text(
-                    text = "¿Olvidaste tu contraseña?",
-                    color = VerdeEco,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = contrasena,
-                onValueChange = { contrasena = it },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                placeholder = {
-                    Text(
-                        text = "••••••••",
-                        color = GrisPlaceholder
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Lock,
-                        contentDescription = "Contraseña",
-                        tint = GrisPlaceholder
-                    )
-                },
-                trailingIcon = {
-                    IconButton(onClick = { mostrarContrasena = !mostrarContrasena }) {
-                        Icon(
-                            imageVector = if (mostrarContrasena) {
-                                Icons.Outlined.Visibility
-                            } else {
-                                Icons.Outlined.VisibilityOff
-                            },
-                            contentDescription = "Mostrar contraseña",
-                            tint = GrisPlaceholder
-                        )
-                    }
-                },
-                visualTransformation = if (mostrarContrasena) {
-                    VisualTransformation.None
-                } else {
-                    PasswordVisualTransformation()
-                },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = BordeCampo,
-                    unfocusedBorderColor = BordeCampo,
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    cursorColor = VerdeEco
-                )
-            )
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            Button(
-                onClick = alIniciarSesion,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = VerdeEco,
-                    contentColor = Color.White
-                )
-            ) {
-                Text(
-                    text = "Entrar  →",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = buildAnnotatedString {
-                    withStyle(
-                        style = SpanStyle(
-                            color = TextoSecundario
-                        )
-                    ) {
-                        append("¿No tienes cuenta? ")
-                    }
-                    withStyle(
-                        style = SpanStyle(
-                            color = VerdeEco,
-                            fontWeight = FontWeight.Bold
-                        )
-                    ) {
-                        append("Regístrate")
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { alRegistrarse() },
-                textAlign = TextAlign.Center,
-                fontSize = 15.sp
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            TextButton(
-                onClick = alVolver,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            ) {
-                Text(
-                    text = "Volver",
-                    color = VerdeEco
-                )
-            }
         }
+        Spacer(modifier = Modifier.height(30.dp))
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Button(
+            onClick = {
+                if (correo.isEmpty() || contrasena.isEmpty()) {
+                    Toast.makeText(context, "Llena los campos", Toast.LENGTH_SHORT).show()
+                } else {
+                    scope.launch {
+                        val res = DatabaseHelper.loginUser(correo, contrasena)
+                        if (res.getString("res") == "success") {
+
+                            val editor = sharedPref.edit()
+
+                            if (recordar) {
+                                editor.putString("correo", correo)
+                                editor.putString("pass", contrasena)
+                                editor.putBoolean("recordar", true)
+                            } else {
+                                editor.clear()
+                            }
+
+                            editor.apply()
+
+                            val mensajeBienvenida = res.getString("msg")
+                            Toast.makeText(context, mensajeBienvenida, Toast.LENGTH_SHORT).show()
+                            alIniciarSesion()
+                        } else {
+                            Toast.makeText(context, res.getString("msg"), Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth().height(54.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = VerdeEco),
+            shape = RoundedCornerShape(28.dp)
+        ) {
+            Text("Entrar  →", fontWeight = FontWeight.Bold)
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+        Text(
+            text = "¿No tienes cuenta? Regístrate",
+            modifier = Modifier.clickable { alRegistrarse() },
+            color = VerdeEco,
+            textAlign = TextAlign.Center
+        )
     }
 }
+
 
 @Composable
 fun PantallaRegistro(
@@ -504,327 +394,52 @@ fun PantallaRegistro(
     var correo by remember { mutableStateOf("") }
     var contrasena by remember { mutableStateOf("") }
     var confirmarContrasena by remember { mutableStateOf("") }
-    var mostrarContrasena by remember { mutableStateOf(false) }
-    var mostrarConfirmarContrasena by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(FondoLogin)
-            .systemBarsPadding()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp, vertical = 20.dp),
+        modifier = Modifier.fillMaxSize().background(FondoLogin).systemBarsPadding().imePadding()
+            .verticalScroll(rememberScrollState()).padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(18.dp))
+        Text("Crear Cuenta", color = VerdeEco, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(30.dp))
 
-        Box(
-            modifier = Modifier
-                .size(78.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .background(VerdeEcoLogo),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo_ecosystem),
-                contentDescription = "Logo EcoSystem",
-                modifier = Modifier.size(38.dp)
-            )
-        }
+        OutlinedTextField(value = nombre, onValueChange = { nombre = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Nombre Completo") }, shape = RoundedCornerShape(16.dp))
+        Spacer(modifier = Modifier.height(10.dp))
+        OutlinedTextField(value = correo, onValueChange = { correo = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Correo") }, shape = RoundedCornerShape(16.dp))
+        Spacer(modifier = Modifier.height(10.dp))
+        OutlinedTextField(value = contrasena, onValueChange = { contrasena = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Contraseña") }, visualTransformation = PasswordVisualTransformation(), shape = RoundedCornerShape(16.dp))
+        Spacer(modifier = Modifier.height(10.dp))
+        OutlinedTextField(value = confirmarContrasena, onValueChange = { confirmarContrasena = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Confirmar") }, visualTransformation = PasswordVisualTransformation(), shape = RoundedCornerShape(16.dp))
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(30.dp))
 
-        Text(
-            text = "EcoSystem",
-            color = VerdeEco,
-            fontSize = 26.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Text(
-            text = "Gestión energética inteligente",
-            color = TextoSecundario,
-            fontSize = 14.sp
-        )
-
-        Spacer(modifier = Modifier.height(34.dp))
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .widthIn(max = 420.dp)
-        ) {
-            Text(
-                text = "Crear cuenta",
-                color = TextoOscuro,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = "Regístrate para comenzar a monitorear tu energía solar.",
-                color = TextoSecundario,
-                fontSize = 14.sp,
-                lineHeight = 20.sp
-            )
-
-            Spacer(modifier = Modifier.height(30.dp))
-
-            Text(
-                text = "Nombre completo",
-                color = TextoOscuro,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = nombre,
-                onValueChange = { nombre = it },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                placeholder = {
-                    Text(
-                        text = "Karla Martínez",
-                        color = GrisPlaceholder
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Person,
-                        contentDescription = "Nombre",
-                        tint = GrisPlaceholder
-                    )
-                },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = BordeCampo,
-                    unfocusedBorderColor = BordeCampo,
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    cursorColor = VerdeEco
-                )
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Text(
-                text = "Correo electrónico",
-                color = TextoOscuro,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = correo,
-                onValueChange = { correo = it },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                placeholder = {
-                    Text(
-                        text = "ejemplo@correo.com",
-                        color = GrisPlaceholder
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Email,
-                        contentDescription = "Correo",
-                        tint = GrisPlaceholder
-                    )
-                },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = BordeCampo,
-                    unfocusedBorderColor = BordeCampo,
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    cursorColor = VerdeEco
-                )
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Text(
-                text = "Contraseña",
-                color = TextoOscuro,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = contrasena,
-                onValueChange = { contrasena = it },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                placeholder = {
-                    Text(
-                        text = "••••••••",
-                        color = GrisPlaceholder
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Lock,
-                        contentDescription = "Contraseña",
-                        tint = GrisPlaceholder
-                    )
-                },
-                trailingIcon = {
-                    IconButton(onClick = { mostrarContrasena = !mostrarContrasena }) {
-                        Icon(
-                            imageVector = if (mostrarContrasena) {
-                                Icons.Outlined.Visibility
-                            } else {
-                                Icons.Outlined.VisibilityOff
-                            },
-                            contentDescription = "Mostrar contraseña",
-                            tint = GrisPlaceholder
-                        )
-                    }
-                },
-                visualTransformation = if (mostrarContrasena) {
-                    VisualTransformation.None
+        Button(
+            onClick = {
+                if (contrasena != confirmarContrasena) {
+                    Toast.makeText(context, "Las claves no coinciden", Toast.LENGTH_SHORT).show()
+                } else if (nombre.isEmpty() || correo.isEmpty()) {
+                    Toast.makeText(context, "Llena todo el formulario pls", Toast.LENGTH_SHORT).show()
                 } else {
-                    PasswordVisualTransformation()
-                },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = BordeCampo,
-                    unfocusedBorderColor = BordeCampo,
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    cursorColor = VerdeEco
-                )
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Text(
-                text = "Confirmar contraseña",
-                color = TextoOscuro,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = confirmarContrasena,
-                onValueChange = { confirmarContrasena = it },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                placeholder = {
-                    Text(
-                        text = "••••••••",
-                        color = GrisPlaceholder
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Lock,
-                        contentDescription = "Confirmar contraseña",
-                        tint = GrisPlaceholder
-                    )
-                },
-                trailingIcon = {
-                    IconButton(onClick = { mostrarConfirmarContrasena = !mostrarConfirmarContrasena }) {
-                        Icon(
-                            imageVector = if (mostrarConfirmarContrasena) {
-                                Icons.Outlined.Visibility
-                            } else {
-                                Icons.Outlined.VisibilityOff
-                            },
-                            contentDescription = "Mostrar contraseña",
-                            tint = GrisPlaceholder
-                        )
+                    scope.launch {
+                        val res = DatabaseHelper.registerUser(nombre, correo, correo, contrasena)
+                        if (res.getString("res") == "success") {
+                            Toast.makeText(context, "¡Listo! Ya puedes entrar", Toast.LENGTH_SHORT).show()
+                            alVolver()
+                        } else {
+                            Toast.makeText(context, res.getString("msg"), Toast.LENGTH_SHORT).show()
+                        }
                     }
-                },
-                visualTransformation = if (mostrarConfirmarContrasena) {
-                    VisualTransformation.None
-                } else {
-                    PasswordVisualTransformation()
-                },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = BordeCampo,
-                    unfocusedBorderColor = BordeCampo,
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    cursorColor = VerdeEco
-                )
-            )
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            Button(
-                onClick = alRegistrarse,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = VerdeEco,
-                    contentColor = Color.White
-                )
-            ) {
-                Text(
-                    text = "Registrarse  →",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = buildAnnotatedString {
-                    withStyle(
-                        style = SpanStyle(
-                            color = TextoSecundario
-                        )
-                    ) {
-                        append("¿Ya tienes cuenta? ")
-                    }
-                    withStyle(
-                        style = SpanStyle(
-                            color = VerdeEco,
-                            fontWeight = FontWeight.Bold
-                        )
-                    ) {
-                        append("Iniciar sesión")
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { alVolver() },
-                textAlign = TextAlign.Center,
-                fontSize = 15.sp
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            TextButton(
-                onClick = alVolver,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            ) {
-                Text(
-                    text = "Volver",
-                    color = VerdeEco
-                )
-            }
+                }
+            },
+            modifier = Modifier.fillMaxWidth().height(54.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = VerdeEco),
+            shape = RoundedCornerShape(28.dp)
+        ) {
+            Text("Registrarse  →", fontWeight = FontWeight.Bold)
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(20.dp))
+        Text("¿Ya tienes cuenta? Inicia sesión", modifier = Modifier.clickable { alVolver() }, color = VerdeEco)
     }
 }

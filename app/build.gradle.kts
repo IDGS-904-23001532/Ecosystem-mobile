@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.ecosystem"
-    compileSdk = 36   // ✅ CAMBIADO
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.ecosystem"
@@ -37,9 +37,17 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/io.netty.versions.properties"
+        }
+    }
 }
 
 dependencies {
+    implementation("androidx.navigation:navigation-compose:2.9.0")
     implementation("com.airbnb.android:lottie-compose:6.6.7") // PANTALLA DE CARGA LOOTIE
     implementation("androidx.compose.material:material-icons-extended")
     implementation(platform(libs.androidx.compose.bom))
@@ -62,4 +70,17 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    implementation("com.hivemq:hivemq-mqtt-client:1.3.3")
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+    // dependencias de retrofit para consumir API
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
+    // esta libreria es para que la app pueda ejecutar actividades en segundo
+    // plano cada cierto tiempo
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    
+    // MQTT Paho Client
+    implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
 }

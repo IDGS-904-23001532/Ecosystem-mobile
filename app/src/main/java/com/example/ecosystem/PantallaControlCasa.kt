@@ -10,49 +10,92 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ecosystem.ui.theme.colorPrimario
 import com.example.ecosystem.ui.theme.interBold
-import androidx.compose.runtime.LaunchedEffect
+import com.hivemq.client.mqtt.MqttClient
+import com.hivemq.client.mqtt.MqttGlobalPublishFilter
+import com.hivemq.client.mqtt.mqtt5.Mqtt5AsyncClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.nio.charset.StandardCharsets.UTF_8
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaControlCasa() {
 
-    // Estado general del sistema - controla todo lo demás
+    // ESTADOS DE LA INTERFAZ (ACTUADORES)
     val sistemaEncendido = remember { mutableStateOf(false) }
+    val estadoFoco = remember { mutableStateOf(false) }
+    val estadoGaraje = remember { mutableStateOf(false) }
+    val estadoVentilador = remember { mutableStateOf(false) }
 
-    val seleccionFocos = remember { mutableStateOf("Apagado") }
-    val opcionesFocos = listOf("Apagado", "Encendido")
-    val expandedFocos = remember { mutableStateOf(false) }
+    // ESTADOS DE TELEMETRÍA (MQTT - Sensores)
+    val tempCasa = remember { mutableStateOf("--") }
+    val presenciaPIR = remember { mutableStateOf(false) }
+    val distanciaCochera = remember { mutableIntStateOf(100) }
+    val conexionEstatus = remember { mutableStateOf("Conectando...") }
 
-    val seleccionGaraje = remember { mutableStateOf("Cerrado") }
-    val expandedGaraje = remember { mutableStateOf(false) }
+    // Lógica de alerta ultrasónico (<= 15cm)
+    val alertaCochera = distanciaCochera.intValue in 1..15
 
-    val seleccionVentilador = remember { mutableStateOf("Apagado") }
-    val opcionesVentilador = listOf("Apagado", "Velocidad 1", "Velocidad 2", "Velocidad 3")
-    val expandedVentilador = remember { mutableStateOf(false) }
+    // CLIENTE MQTT
+    var client by remember { mutableStateOf<Mqtt5AsyncClient?>(null) }
 
-    // Cuenta dispositivos activos solo si el sistema está encendido
-    val dispositivosActivos = if (sistemaEncendido.value) {
-        // Estos estados se actualizarán cuando se conecte MQTT.
-        var estadoConexion by remember { mutableStateOf("Esperando...") }
-        var consumoActual by remember { mutableStateOf("-- kWh") }
-        var mayorConsumo by remember { mutableStateOf("--") }
+    val host = "2c475eb27a4845ad8904f6e355ee7f6d.s1.eu.hivemq.cloud"
+    val port = 8883
+    val username = "kevax"
+    val password = "Minombre123"
 
-        // Punto donde posteriormente se realizará toda la conexión MQTT.
-        LaunchedEffect(Unit) {
-            // TODO: Inicializar MQTT y comenzar a recibir datos.
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            val mqttClient = MqttClient.builder()
+                .useMqttVersion5()
+                .serverHost(host)
+                .serverPort(port)
+                .sslWithDefaultConfig()
+                .buildAsync()
+
+            mqttClient.connectWith()
+                .simpleAuth()
+                .username(username)
+                .password(UTF_8.encode(password))
+                .applySimpleAuth()
+                .send()
+                .whenComplete { ack, ex ->
+                    if (ex == null) {
+                        conexionEstatus.value = "Conectado"
+                        client = mqttClient
+
+                        // Suscripción a la telemetría del ESP32
+                        mqttClient.subscribeWith()
+                            .topicFilter("ecosystem/telemetria")
+                            .send()
+
+                        // Escucha global de mensajes
+                        mqttClient.publishes(MqttGlobalPublishFilter.ALL) { publish ->
+                            val topic = publish.topic.toString()
+                            if (topic == "ecosystem/telemetria") {
+                                val payloadString = String(publish.payloadAsBytes, UTF_8)
+                                try {
+                                    // Parseo del JSON recibido desde Arduino
+                                    val json = JSONObject(payloadString)
+                                    tempCasa.value = json.optString("temperatura", "--")
+                                    presenciaPIR.value = json.optBoolean("presencia", false)
+                                    distanciaCochera.intValue = json.optInt("distancia_cm", 100)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                        }
+                    } else {
+                        conexionEstatus.value = "Error de red"
+                    }
+                }
         }
-
-        listOf(
-            seleccionFocos.value != "Apagado",
-            seleccionGaraje.value != "Cerrado",
-            seleccionVentilador.value != "Apagado"
-        ).count { it }
-    } else {
-        0
     }
 
     Scaffold(
@@ -81,9 +124,7 @@ fun PantallaControlCasa() {
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-
             item {
-
                 Image(
                     painter = painterResource(id = R.drawable.ic_house_backgroud),
                     contentDescription = "Control del Hogar",
@@ -93,207 +134,154 @@ fun PantallaControlCasa() {
                         .height(200.dp)
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
-
+                // Estatus de conexión HiveMQ
                 Text(
-                    text = "Estado",
-                    fontSize = 20.sp,
-                    fontFamily = interBold
+                    text = "HiveMQ: ${conexionEstatus.value}",
+                    fontSize = 12.sp,
+                    color = if (conexionEstatus.value == "Conectado") Color(0xFF2E7D32) else Color.Red
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
+                Text(text = "Interruptor Principal", fontSize = 20.sp, fontFamily = interBold)
+                Spacer(modifier = Modifier.height(8.dp))
 
-                // Checkbox de estado general - habilita/deshabilita todo el sistema
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(
+                // Control Maestro
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Switch(
                         checked = sistemaEncendido.value,
                         onCheckedChange = { encendido ->
                             sistemaEncendido.value = encendido
-                            // Si se apaga el sistema, regresa todos los dispositivos a su estado inicial
-                            // TODO: aquí irá la publicación MQTT para apagar todos los dispositivos
                             if (!encendido) {
-                                seleccionFocos.value = "Apagado"
-                                seleccionGaraje.value = "Cerrado"
-                                seleccionVentilador.value = "Apagado"
+                                estadoFoco.value = false
+                                estadoGaraje.value = false
+
+                                // Envía comando de apagado general al ESP32
+                                client?.publishWith()
+                                    ?.topic("ecosystem/comandos")
+                                    ?.payload(UTF_8.encode("SISTEMA_APAGADO"))
+                                    ?.send()
                             }
                         }
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = if (sistemaEncendido.value) "Encendido" else "Apagado",
-                        fontSize = 16.sp
+                        text = if (sistemaEncendido.value) "Sistema Activo" else "Modo Reposo",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
                     )
                 }
 
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(text = "Actuadores", fontSize = 20.sp, fontFamily = interBold)
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = "Dispositivos",
-                    fontSize = 20.sp,
-                    fontFamily = interBold
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
+                // Tarjeta de Controles
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
                     Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-
-                        // Focos - deshabilitado si el sistema está apagado
+                        // 1. Foco LED
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = "Focos",
-                                fontSize = 14.sp,
-                                color = if (sistemaEncendido.value) Color.Unspecified else Color.Gray
+                            Text("Foco LED Principal", fontSize = 16.sp, color = if (sistemaEncendido.value) Color.Black else Color.Gray)
+                            Switch(
+                                checked = estadoFoco.value,
+                                enabled = sistemaEncendido.value,
+                                onCheckedChange = { encender ->
+                                    estadoFoco.value = encender
+                                    val comando = if (encender) "FOCO_ON" else "FOCO_OFF"
+                                    client?.publishWith()
+                                        ?.topic("ecosystem/comandos")
+                                        ?.payload(UTF_8.encode(comando))
+                                        ?.send()
+                                }
                             )
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = seleccionFocos.value,
-                                    fontSize = 13.sp,
-                                    color = Color.Gray
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Switch(
-                                    checked = seleccionFocos.value == "Encendido",
-                                    enabled = sistemaEncendido.value,
-                                    onCheckedChange = { encendido ->
-                                        seleccionFocos.value = if (encendido) "Encendido" else "Apagado"
-                                        // TODO: publicar a MQTT topic casa/focos con valor encendido/apagado
-                                    }
-                                )
-                            }
                         }
 
-                        // Puerta del Garaje - deshabilitado si el sistema está apagado
+                        // 2. Garaje
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = "Puerta del Garaje",
-                                fontSize = 14.sp,
-                                color = if (sistemaEncendido.value) Color.Unspecified else Color.Gray
+                            Text("Puerta de Garaje", fontSize = 16.sp, color = if (sistemaEncendido.value) Color.Black else Color.Gray)
+                            Switch(
+                                checked = estadoGaraje.value,
+                                enabled = sistemaEncendido.value,
+                                onCheckedChange = { abrir ->
+                                    estadoGaraje.value = abrir
+                                    val comando = if (abrir) "PUERTA_ABRIR" else "PUERTA_CERRAR"
+                                    client?.publishWith()
+                                        ?.topic("ecosystem/comandos")
+                                        ?.payload(UTF_8.encode(comando))
+                                        ?.send()
+                                }
                             )
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = seleccionGaraje.value,
-                                    fontSize = 13.sp,
-                                    color = Color.Gray
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Switch(
-                                    checked = seleccionGaraje.value == "Abierto",
-                                    enabled = sistemaEncendido.value,
-                                    onCheckedChange = { abierto ->
-                                        seleccionGaraje.value = if (abierto) "Abierto" else "Cerrado"
-                                        // TODO: publicar a MQTT topic casa/garaje con valor abierto/cerrado
-                                    }
-                                )
-                            }
                         }
 
-                        // Ventilador - deshabilitado si el sistema está apagado
+                        // 3. Ventilador (Bloqueado temporalmente)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = "Ventilador",
-                                fontSize = 14.sp,
-                                color = if (sistemaEncendido.value) Color.Unspecified else Color.Gray
-                            )
-                            Box {
-                                OutlinedButton(
-                                    onClick = {
-                                        if (sistemaEncendido.value) expandedVentilador.value = true
-                                    },
-                                    enabled = sistemaEncendido.value
-                                ) {
-                                    Text(seleccionVentilador.value, fontSize = 13.sp)
-                                }
-                                DropdownMenu(
-                                    expanded = expandedVentilador.value,
-                                    onDismissRequest = { expandedVentilador.value = false }
-                                ) {
-                                    opcionesVentilador.forEach { opcion ->
-                                        DropdownMenuItem(
-                                            text = { Text(opcion) },
-                                            onClick = {
-                                                seleccionVentilador.value = opcion
-                                                expandedVentilador.value = false
-                                                // TODO: publicar a MQTT topic casa/ventilador con la velocidad seleccionada
-                                            }
-                                        )
-                                    }
-                                }
+                            Column {
+                                Text("Ventilador", fontSize = 16.sp, color = Color.LightGray)
+                                Text("(Falta módulo relay)", fontSize = 12.sp, color = Color.Red)
                             }
+                            Switch(
+                                checked = estadoVentilador.value,
+                                enabled = false,
+                                onCheckedChange = { }
+                            )
                         }
                     }
                 }
 
+                Spacer(modifier = Modifier.height(20.dp))
+                Text(text = "Sensores y Entorno", fontSize = 20.sp, fontFamily = interBold)
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = "Información",
-                    fontSize = 20.sp,
-                    fontFamily = interBold
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
+                // Fila 1: Temperatura y PIR
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                    ) {
+                    Card(modifier = Modifier.weight(1f), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp), colors = CardDefaults.cardColors(containerColor = Color.White)) {
                         Column(modifier = Modifier.padding(14.dp)) {
-                            Text(
-                                text = "Consumo actual",
-                                fontSize = 12.sp,
-                                color = Color.Gray
-                            )
+                            Text("Temperatura", fontSize = 13.sp, color = Color.Gray)
                             Spacer(modifier = Modifier.height(6.dp))
-                            // TODO: reemplazar con dato real de MQTT
-                            Text(
-                                text = consumoActual,
-                                fontSize = 20.sp,
-                                fontFamily = interBold
-                            )
+                            Text("${tempCasa.value} °C", fontSize = 22.sp, fontFamily = interBold)
                         }
                     }
 
                     Card(
                         modifier = Modifier.weight(1f),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (presenciaPIR.value) Color(0xFFFF5252) else Color.White
+                        )
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
                             Text(
-                                text = "Mayor consumo",
-                                fontSize = 12.sp,
-                                color = Color.Gray
+                                "Movimiento",
+                                fontSize = 13.sp,
+                                color = if (presenciaPIR.value) Color.White else Color.Gray
                             )
                             Spacer(modifier = Modifier.height(6.dp))
-                            // TODO: reemplazar con dato real de MQTT
                             Text(
-                                text = mayorConsumo,
-                                fontSize = 16.sp,
-                                fontFamily = interBold
+                                text = if (presenciaPIR.value) "¡DETECTADO!" else "Sin presencia",
+                                fontSize = 18.sp,
+                                fontFamily = interBold,
+                                color = if (presenciaPIR.value) Color.White else Color.Black
                             )
                         }
                     }
@@ -301,55 +289,45 @@ fun PantallaControlCasa() {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Row(
+                // Tarjeta de Alerta de Cochera (Ultrasónico)
+                Card(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (alertaCochera) Color(0xFFD32F2F) else Color(0xFFE8F5E9)
+                    )
                 ) {
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFFFD600)
-                        )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
+                        Column {
                             Text(
-                                text = "Dispositivos activos",
-                                fontSize = 12.sp,
-                                color = Color.Black
+                                text = "Sensor de Cochera",
+                                fontSize = 14.sp,
+                                color = if (alertaCochera) Color.White else Color.DarkGray
                             )
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "$dispositivosActivos / 3",
-                                fontSize = 20.sp,
+                                text = if (alertaCochera) "¡ALERTA! Auto muy cerca" else "Distancia Segura",
+                                fontSize = 18.sp,
                                 fontFamily = interBold,
-                                color = Color.Black
+                                color = if (alertaCochera) Color.White else Color(0xFF2E7D32)
                             )
                         }
-                    }
-
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Text(
-                                text = "Estado red",
-                                fontSize = 12.sp,
-                                color = Color.Gray
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            // TODO: reemplazar con estado real de conexión MQTT
-                            Text(
-                                text = estadoConexion,
-                                fontSize = 16.sp,
-                                fontFamily = interBold
-                            )
-                        }
+                        Text(
+                            text = "${distanciaCochera.intValue} cm",
+                            fontSize = 24.sp,
+                            fontFamily = interBold,
+                            color = if (alertaCochera) Color.White else Color(0xFF2E7D32)
+                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
