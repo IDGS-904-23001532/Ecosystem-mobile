@@ -27,17 +27,13 @@ import java.nio.charset.StandardCharsets.UTF_8
 @Composable
 fun PantallaControlCasa() {
 
-    // ==========================================
     // ESTADOS DE LA INTERFAZ (ACTUADORES)
-    // ==========================================
     val sistemaEncendido = remember { mutableStateOf(false) }
     val estadoFoco = remember { mutableStateOf(false) }
     val estadoGaraje = remember { mutableStateOf(false) }
     val estadoVentilador = remember { mutableStateOf(false) }
 
-    // ==========================================
     // ESTADOS DE TELEMETRÍA (MQTT - Sensores)
-    // ==========================================
     val tempCasa = remember { mutableStateOf("--") }
     val presenciaPIR = remember { mutableStateOf(false) }
     val distanciaCochera = remember { mutableIntStateOf(100) }
@@ -46,12 +42,10 @@ fun PantallaControlCasa() {
     // Lógica de alerta ultrasónico (<= 15cm)
     val alertaCochera = distanciaCochera.intValue in 1..15
 
-    // ==========================================
     // CLIENTE MQTT
-    // ==========================================
     var client by remember { mutableStateOf<Mqtt5AsyncClient?>(null) }
 
-    val host = "96642097c1d94aed9589f163592aae4a.s1.eu.hivemq.cloud"
+    val host = "2c475eb27a4845ad8904f6e355ee7f6d.s1.eu.hivemq.cloud"
     val port = 8883
     val username = "kevax"
     val password = "Minombre123"
