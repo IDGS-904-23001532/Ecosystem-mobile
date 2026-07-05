@@ -204,8 +204,9 @@ fun PantallaBateria(viewModel: BateriaViewModel = viewModel()) {
                             }
                         }
                     } else if (data != null) {
-                        // Pasamos el porcentaje real (ej. 45.0 a 0.45f)
-                        val porcentajeBateria = data.porcentajeBateria?.toFloat() ?: 0f
+                        // El porcentaje se calcula dividiendo el voltaje actual entre 12.0 V y multiplicando por 100
+                        val apiVoltaje = data.voltajeV ?: 0.0
+                        val porcentajeBateria = ((apiVoltaje / 12.0) * 100.0).toFloat().coerceIn(0f, 100f)
                         Box(
                             modifier = Modifier.fillMaxWidth(),
                             contentAlignment = Alignment.Center
@@ -239,6 +240,7 @@ fun PantallaBateria(viewModel: BateriaViewModel = viewModel()) {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
+                            // Mostramos el voltaje real directo de la API
                             val voltaje = data.voltajeV?.let { "$it V" } ?: "N/A"
                             val corriente = data.corrienteA?.let { "$it A" } ?: "N/A"
 
