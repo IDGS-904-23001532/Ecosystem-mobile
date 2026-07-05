@@ -15,9 +15,10 @@ class BateriaWorker(context: Context, params: WorkerParameters) : CoroutineWorke
             if (response.status == "success" && response.data != null) {
                 val data = response.data
 
-                // 2. Preparamos los textos de la notificación con los datos reales
-                val porcentaje = data.porcentajeBateria?.toInt() ?: 0
-                val titulo = "Batería: $porcentaje%"
+                // 2. Preparamos los textos de la notificación con los datos reales calculados
+                val apiVoltaje = data.voltajeV ?: 0.0
+                val porcentajeCalculado = ((apiVoltaje / 12.0) * 100.0).toInt().coerceIn(0, 100)
+                val titulo = "Batería: $porcentajeCalculado%"
                 val mensajeCorto = "Potencia: ${data.potenciaW ?: 0f} W"
                 val mensajeDetalle = """
                     Estado de tu Ecosistema:
