@@ -268,8 +268,12 @@ fun PantallaControlCasa() {
                     Column(modifier = Modifier.padding(16.dp)) {
                         focos.forEachIndexed { index, foco ->
                             FilaInterruptor(foco.first, foco.second, sistemaEncendido.value) { estado ->
-                                // Convierte "Habitación 1" a "FOCO_HABITACION_1_ON"
-                                val nombreFormateado = foco.first.uppercase().replace(" ", "_").replace("Ñ", "N")
+                                // Convertimos a mayúsculas, quitamos espacios, Ñ y acentos
+                                val nombreFormateado = foco.first.uppercase()
+                                    .replace(" ", "_")
+                                    .replace("Ñ", "N")
+                                    .replace("Ó", "O") // <--- SOLUCIÓN AQUÍ
+
                                 val cmd = if (estado) "FOCO_${nombreFormateado}_ON" else "FOCO_${nombreFormateado}_OFF"
                                 client?.publishWith()?.topic("ecosystem/comandos")?.payload(UTF_8.encode(cmd))?.send()
                             }
