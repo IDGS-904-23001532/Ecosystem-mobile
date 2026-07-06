@@ -53,6 +53,24 @@ data class BateriaData(
     @SerializedName("tiempo_estimado_horas") val tiempoEstimadoHoras: Double?
 )
 
+data class LecturaResponse(
+    val status: String,
+    val data: LecturaData?
+)
+
+data class LecturaData(
+    @SerializedName("id_lectura") val idLectura: Int?,
+    @SerializedName("id_dispositivo") val idDispositivo: Int?,
+    @SerializedName("id_modo") val idModo: Int?,
+    @SerializedName("voltaje_v") val voltajeV: Double?,
+    @SerializedName("corriente_a") val corrienteA: Double?,
+    @SerializedName("energia_generada_wh") val energiaGeneradaWh: Double?,
+    @SerializedName("angulo_panel") val anguloPanel: String?,
+    @SerializedName("alerta_generada") val alertaGenerada: Int?,
+    @SerializedName("tipo_alerta") val tipoAlerta: String?,
+    @SerializedName("fecha_registro") val fechaRegistro: String?
+)
+
 interface ApiService {
     // Reemplaza "vendingbox.online" o tu IP local de Flask (ej. "http://192.168.1.X:9000/")
     @GET("api/estado_bateria")
@@ -60,6 +78,9 @@ interface ApiService {
 
     @GET("api/consumo_bateria_semana")
     suspend fun getConsumoBateriaSemana(): com.example.ecosystem.ConsumoSemanalResponse
+
+    @GET("api/guardar_lectura")
+    suspend fun getUltimaLectura(): LecturaResponse
 }
 
 object RetrofitClient {
@@ -183,8 +204,9 @@ fun PantallaBateria(viewModel: BateriaViewModel = viewModel()) {
                             }
                         }
                     } else if (data != null) {
-                        // Pasamos el porcentaje real (ej. 45.0 a 0.45f)
-                        val porcentajeBateria = data.porcentajeBateria?.toFloat() ?: 0f
+                        // El porcentaje se calcula dividiendo el voltaje actual entre 12.0 V y multiplicando por 100
+                        val apiVoltaje = data.voltajeV ?: 0.0
+                        val porcentajeBateria = ((apiVoltaje / 12.0) * 100.0).toFloat().coerceIn(0f, 100f)
                         Box(
                             modifier = Modifier.fillMaxWidth(),
                             contentAlignment = Alignment.Center
@@ -218,6 +240,7 @@ fun PantallaBateria(viewModel: BateriaViewModel = viewModel()) {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
+                            // Mostramos el voltaje real directo de la API
                             val voltaje = data.voltajeV?.let { "$it V" } ?: "N/A"
                             val corriente = data.corrienteA?.let { "$it A" } ?: "N/A"
 
