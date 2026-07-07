@@ -31,7 +31,7 @@
         <activity android:name=".Bateria.BateriaActivity"></activity>
         <activity android:name=".AgregarDispositivo"></activity>
         <activity android:name=".HogarActivity"></activity>
-
+        <activity android:name=".Jardin.PantallaControlJardin"/>
     </application>
 
 </manifest>
