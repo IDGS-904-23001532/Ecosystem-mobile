@@ -16,11 +16,53 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ecosystem.ui.theme.EcosystemTheme
 import com.example.ecosystem.ui.theme.colorPrimario
 import com.example.ecosystem.ui.theme.interBold
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
+import com.example.ecosystem.Bateria.RetrofitClient
+import com.example.ecosystem.Bateria.LecturaData
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Warning
+
+class PanelSolarViewModel : ViewModel() {
+    var lecturaData by mutableStateOf<LecturaData?>(null)
+        private set
+    var isLoading by mutableStateOf(true)
+        private set
+    var errorMessage by mutableStateOf<String?>(null)
+        private set
+
+    init {
+        fetchUltimaLectura()
+    }
+
+    fun fetchUltimaLectura() {
+        viewModelScope.launch {
+            isLoading = true
+            errorMessage = null
+            try {
+                val response = RetrofitClient.apiService.getUltimaLectura()
+                if (response.status == "success") {
+                    lecturaData = response.data
+                } else {
+                    errorMessage = "Error en la respuesta del servidor"
+                }
+            } catch (e: Exception) {
+                errorMessage = "Error de conexión: ${e.message}"
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+}
 
 class PanelSolar : ComponentActivity() {
 
@@ -37,7 +79,10 @@ class PanelSolar : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaPanelSolar() {
+fun PantallaPanelSolar(viewModel: PanelSolarViewModel = viewModel()) {
+    val lectura = viewModel.lecturaData
+    val isLoading = viewModel.isLoading
+    val errorMessage = viewModel.errorMessage
 
     var encendido by remember { mutableStateOf(true) }
 
@@ -51,6 +96,15 @@ fun PantallaPanelSolar() {
                         fontFamily = interBold,
                         color = colorPrimario
                     )
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.fetchUltimaLectura() }) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Actualizar",
+                            tint = colorPrimario
+                        )
+                    }
                 }
             )
         }
@@ -113,110 +167,185 @@ fun PantallaPanelSolar() {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Fila superior: Cosecha del Día | Ángulos Servo
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Card 1 - Cosecha del Día
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Column(
-                            modifier = Modifier.padding(14.dp)
-                        ) {
-                            Text(
-                                text = "Cosecha del Día",
-                                fontSize = 12.sp,
-                                color = Color.Gray
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = "12.8 Kwh",
-                                fontSize = 20.sp,
-                                fontFamily = interBold
-                            )
-                        }
+                        CircularProgressIndicator(color = colorPrimario)
                     }
-
-                    // Card 2 - Ángulos Servo
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                } else if (errorMessage != null) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column(
-                            modifier = Modifier.padding(14.dp)
-                        ) {
-                            Text(
-                                text = "Ángulos Servo",
-                                fontSize = 12.sp,
-                                color = Color.Gray
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = "H: 92° | V: 45°",
-                                fontSize = 16.sp,
-                                fontFamily = interBold
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Fila inferior: Energía Total Generada | Estado
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Card 3 - Energía Total Generada (amarilla como en el mockup)
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFFFD600)
+                        Text(
+                            text = errorMessage,
+                            color = Color.Red,
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center
                         )
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(14.dp)
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Button(
+                            onClick = { viewModel.fetchUltimaLectura() },
+                            colors = ButtonDefaults.buttonColors(containerColor = colorPrimario)
                         ) {
-                            Text(
-                                text = "Energía Total Generada",
-                                fontSize = 12.sp,
-                                color = Color.Black
+                            Text("Reintentar")
+                        }
+                    }
+                } else if (lectura != null) {
+                    if (lectura.alertaGenerada == 1) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 12.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color(0xFFFDE8E8)
                             )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = "198 Kwh",
-                                fontSize = 20.sp,
-                                fontFamily = interBold,
-                                color = Color.Black
-                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Warning,
+                                    contentDescription = "Alerta",
+                                    tint = Color.Red,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Alerta: ${lectura.tipoAlerta ?: "Anomalía en el panel"}",
+                                    color = Color.Red,
+                                    fontSize = 14.sp,
+                                    fontFamily = interBold
+                                )
+                            }
                         }
                     }
 
-                    // Card 4 - Estado del modo
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    // Fila superior: Cosecha del Día | Ángulos Servo
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(14.dp)
+                        // Card 1 - Cosecha del Día
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                         ) {
-                            Text(
-                                text = "Estado:",
-                                fontSize = 12.sp,
-                                color = Color.Gray
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = "Siguiendo Luz",
-                                fontSize = 16.sp,
-                                fontFamily = interBold
-                            )
+                            Column(
+                                modifier = Modifier.padding(14.dp)
+                            ) {
+                                Text(
+                                    text = "Cosecha actual",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = "${lectura.energiaGeneradaWh ?: 0.0} Wh",
+                                    fontSize = 18.sp,
+                                    fontFamily = interBold
+                                )
+                            }
+                        }
+
+                        // Card 2 - Ángulos Servo
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(14.dp)
+                            ) {
+                                Text(
+                                    text = "Ángulos Servo",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = lectura.anguloPanel ?: "N/A",
+                                    fontSize = 16.sp,
+                                    fontFamily = interBold
+                                )
+                            }
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Fila inferior: Voltaje y Corriente | Estado
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Card 3 - Voltaje y Corriente
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color(0xFFFFD600)
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(14.dp)
+                            ) {
+                                Text(
+                                    text = "Voltaje y Corriente",
+                                    fontSize = 12.sp,
+                                    color = Color.Black
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = "${lectura.voltajeV ?: 0.0}V | ${lectura.corrienteA ?: 0.0}A",
+                                    fontSize = 15.sp,
+                                    fontFamily = interBold,
+                                    color = Color.Black
+                                )
+                            }
+                        }
+
+                        // Card 4 - Estado del modo
+                        val modoTexto = when (lectura.idModo) {
+                            1 -> "Siguiendo Luz"
+                            2 -> "Manual"
+                            else -> "Desconocido"
+                        }
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(14.dp)
+                            ) {
+                                Text(
+                                    text = "Modo:",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = modoTexto,
+                                    fontSize = 16.sp,
+                                    fontFamily = interBold
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "Último registro: ${lectura.fechaRegistro ?: "N/A"}",
+                        fontSize = 11.sp,
+                        color = Color.Gray
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
@@ -242,6 +371,6 @@ fun PantallaPanelSolar() {
                     Text("Ver mantenimiento")
                 }
             }
-            }
         }
     }
+}
