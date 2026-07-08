@@ -11,6 +11,7 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.example.ecosystem.repository.JardinRepository
 
 class JardinViewModel : ViewModel() {
     // Estados observables por Jetpack Compose
@@ -23,6 +24,9 @@ class JardinViewModel : ViewModel() {
     var fechaCapturaLocal by mutableStateOf("Sin registros")
 
     private var mqttClient: MqttClient? = null
+
+    // Repository preparado para consumir la API cuando esté disponible.
+    private val repository = JardinRepository()
 
     init {
         conectarBroker()
@@ -117,5 +121,13 @@ class JardinViewModel : ViewModel() {
     private fun actualizarFechaLocal() {
         val formatter = SimpleDateFormat("yyyy-MM-2026 HH:mm:ss", Locale.getDefault())
         fechaCapturaLocal = formatter.format(Date())
+    }
+
+    /**
+     * Aquí se obtendrá la información proveniente de la API del proyecto.
+     */
+    fun actualizarDatosDesdeApi() {
+
+
     }
 }
