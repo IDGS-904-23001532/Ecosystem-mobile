@@ -12,6 +12,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import com.example.ecosystem.repository.JardinRepository
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class JardinViewModel : ViewModel() {
     // Estados observables por Jetpack Compose
@@ -29,7 +32,9 @@ class JardinViewModel : ViewModel() {
     private val repository = JardinRepository()
 
     init {
-        conectarBroker()
+        viewModelScope.launch(Dispatchers.IO) {
+            conectarBroker()
+        }
     }
 
     /*
