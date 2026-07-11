@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -83,4 +85,37 @@ dependencies {
     
     // MQTT Paho Client
     implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
+}
+
+tasks.register<Copy>("copyApkToFlask") {
+    val localProperties = Properties()
+    val localPropertiesFile = project.rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        val stream = localPropertiesFile.inputStream()
+        localProperties.load(stream)
+        stream.close()
+    }
+    val flaskDir = localProperties.getProperty("flask.server.dir")
+
+    if (!flaskDir.isNullOrBlank()) {
+        from(layout.buildDirectory.dir("outputs/apk/debug")) {
+            include("app-debug.apk")
+            rename("app-debug.apk", "ecosystem-app.apk")
+        }
+        into(file("$flaskDir/static/app"))
+        
+        doLast {
+            println("SUCCESS: APK copiado con exito a: $flaskDir/static/app/ecosystem-app.apk")
+        }
+    } else {
+        doLast {
+            println("WARNING: No se definio 'flask.server.dir' en local.properties. Se omitio la copia del APK.")
+        }
+    }
+}
+
+tasks.configureEach {
+    if (name == "assembleDebug") {
+        finalizedBy("copyApkToFlask")
+    }
 }
