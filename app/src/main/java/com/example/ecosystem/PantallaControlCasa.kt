@@ -24,15 +24,17 @@ import com.hivemq.client.mqtt.mqtt5.Mqtt5AsyncClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 import java.nio.charset.StandardCharsets.UTF_8
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaControlCasa() {
 
-    // ==========================================
+    //
     // ESTADOS DE LA INTERFAZ (ACTUADORES)
-    // ==========================================
+    //
     val sistemaEncendido = remember { mutableStateOf(false) }
 
     // Accesos (2 Servomotores)
@@ -43,7 +45,6 @@ fun PantallaControlCasa() {
     val estadoVentilador = remember { mutableStateOf(false) } // Bloqueado temporalmente
 
     // Iluminación (7 Habitaciones)
-    // Usamos una lista de pares (Nombre -> Estado) para generar los switches dinámicamente
     val focos = listOf(
         "Sala" to remember { mutableStateOf(false) },
         "Cocina" to remember { mutableStateOf(false) },
@@ -65,22 +66,30 @@ fun PantallaControlCasa() {
     val pirTrasero = remember { mutableStateOf(false) }
     val pirIzquierdo = remember { mutableStateOf(false) }
     val pirDerecho = remember { mutableStateOf(false) }
-
     val conexionEstatus = remember { mutableStateOf("Conectando...") }
-
-    // Lógica de alerta ultrasónico (<= 15cm)
     val alertaCochera = distanciaCochera.intValue in 1..15
 
     //
-    // CLIENTE MQTT
+    // ESTADOS DE PREDICCIÓN (IA - Python)
+    //
+    val potenciaEstimadaW = remember { mutableStateOf("0.0") }
+    val costoProyectadoMXN = remember { mutableStateOf("0.00") }
+
+    // Variables reactivas para el modelo
+    val focosEncendidos = focos.count { it.second.value }
+    val ventiladorPrendido = estadoVentilador.value
+    val puertasActivas = listOf(puertaPrincipal, puertaGaraje).count { it.value }
+
+    //
+    // CLIENTES Y EFECTOS
     //
     var client by remember { mutableStateOf<Mqtt5AsyncClient?>(null) }
-
     val host = "2c475eb27a4845ad8904f6e355ee7f6d.s1.eu.hivemq.cloud"
     val port = 8883
     val username = "kevax"
     val password = "Minombre123"
 
+    // 1. CONEXIÓN MQTT
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
             val mqttClient = MqttClient.builder()
@@ -89,7 +98,6 @@ fun PantallaControlCasa() {
                 .serverPort(port)
                 .sslWithDefaultConfig()
                 .buildAsync()
-
             mqttClient.connectWith()
                 .simpleAuth()
                 .username(username)
@@ -110,8 +118,6 @@ fun PantallaControlCasa() {
                                     val json = JSONObject(payloadString)
                                     tempCasa.value = json.optString("temperatura", "--")
                                     distanciaCochera.intValue = json.optInt("distancia_cm", 100)
-
-                                    // Lectura de los 4 PIR
                                     pirFrontal.value = json.optBoolean("pir_frontal", false)
                                     pirTrasero.value = json.optBoolean("pir_trasero", false)
                                     pirIzquierdo.value = json.optBoolean("pir_izquierdo", false)
@@ -128,8 +134,51 @@ fun PantallaControlCasa() {
         }
     }
 
+    // 2. PETICIÓN A PYTHON (Predicción de Consumo Automática con IA)
+    LaunchedEffect(focosEncendidos, ventiladorPrendido, puertasActivas) {
+        withContext(Dispatchers.IO) {
+            try {
+                // Estado visual de carga temporal
+                potenciaEstimadaW.value = "..."
+                costoProyectadoMXN.value = "..."
+
+                val url = URL("https://ecosystem-python-production.up.railway.app/api/prediccion_consumo")
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "POST"
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.doOutput = true
+
+                val jsonParam = JSONObject()
+                jsonParam.put("focos_encendidos", focosEncendidos)
+                jsonParam.put("ventilador_encendido", ventiladorPrendido)
+                jsonParam.put("puertas_moviendose", puertasActivas)
+
+                // FIX: Escribir, forzar el envío (flush) y cerrar el canal
+                val outputBytes = jsonParam.toString().toByteArray(UTF_8)
+                val os = connection.outputStream
+                os.write(outputBytes)
+                os.flush()
+                os.close()
+
+                if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                    val response = connection.inputStream.bufferedReader().readText()
+                    val estimacion = JSONObject(response).getJSONObject("estimacion")
+                    potenciaEstimadaW.value = estimacion.getString("potencia_instantanea_w")
+                    costoProyectadoMXN.value = estimacion.getString("costo_proyectado_mxn")
+                } else {
+                    println("Error en el servidor: Código ${connection.responseCode}")
+                    potenciaEstimadaW.value = "Error"
+                }
+                connection.disconnect()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                potenciaEstimadaW.value = "Fallo red"
+            }
+        }
+    }
+
     Scaffold(
-        containerColor = Color(0xFFF5F5F5), // Fondo ligeramente gris para resaltar las tarjetas blancas
+        containerColor = Color(0xFFF5F5F5), // Fondo gris claro
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Control del Hogar", fontSize = 22.sp, fontFamily = interBold, color = colorPrimario) },
@@ -137,7 +186,6 @@ fun PantallaControlCasa() {
             )
         }
     ) { paddingValues ->
-
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -154,16 +202,49 @@ fun PantallaControlCasa() {
                 )
 
                 Text(
-                    text = "Estado: ${conexionEstatus.value}",
+                    text = "Estado MQTT: ${conexionEstatus.value}",
                     fontSize = 12.sp,
                     color = if (conexionEstatus.value == "Conectado") Color(0xFF2E7D32) else Color.Red,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
-                // ==========================================
+                //
+                // TARJETA DE EFICIENCIA ENERGÉTICA (IA)
+                //
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("⚡ Predicción de Consumo (IA)", fontFamily = interBold, fontSize = 16.sp, color = Color(0xFF2E7D32))
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Column {
+                                Text("Gasto Actual Estimado", fontSize = 12.sp, color = Color.Gray)
+                                Text("${potenciaEstimadaW.value} W", fontSize = 22.sp, fontFamily = interBold, color = Color.Black)
+                            }
+
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text("Costo Mensual CFE", fontSize = 12.sp, color = Color.Gray)
+                                Text("$${costoProyectadoMXN.value} MXN", fontSize = 22.sp, fontFamily = interBold, color = Color(0xFF1B5E20))
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                //
                 // CONTROL MAESTRO
-                // ==========================================
+                //
+
                 Card(colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
+
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -191,9 +272,10 @@ fun PantallaControlCasa() {
                 //
                 // ENTORNO Y ALERTA DE COCHERA
                 //
-                Text(text = "Monitoreo", fontSize = 18.sp, fontFamily = interBold)
 
+                Text(text = "Monitoreo", fontSize = 18.sp, fontFamily = interBold)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+
                     // Temperatura
                     Card(modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
                         Column(modifier = Modifier.padding(14.dp)) {
@@ -224,11 +306,12 @@ fun PantallaControlCasa() {
                 //
                 // SEGURIDAD PERIMETRAL (4 PIR)
                 //
+
                 Text(text = "Seguridad Perimetral", fontSize = 18.sp, fontFamily = interBold)
                 Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            SensorPIRItem("Frontal", pirFrontal.value)
+                            //SensorPIRItem("Frontal", pirFrontal.value)
                             SensorPIRItem("Trasera", pirTrasero.value)
                         }
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -240,9 +323,9 @@ fun PantallaControlCasa() {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                //
+                // ==========================================
                 // ACCESOS (SERVOS)
-                //
+                // ==========================================
                 Text(text = "Accesos", fontSize = 18.sp, fontFamily = interBold)
                 Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -250,6 +333,7 @@ fun PantallaControlCasa() {
                             val cmd = if (estado) "PUERTA_PRINCIPAL_ABRIR" else "PUERTA_PRINCIPAL_CERRAR"
                             client?.publishWith()?.topic("ecosystem/comandos")?.payload(UTF_8.encode(cmd))?.send()
                         }
+
                         Divider(modifier = Modifier.padding(vertical = 8.dp), color = Color.LightGray)
                         FilaInterruptor("Puerta Garaje", puertaGaraje, sistemaEncendido.value) { estado ->
                             val cmd = if (estado) "PUERTA_GARAJE_ABRIR" else "PUERTA_GARAJE_CERRAR"
@@ -268,16 +352,19 @@ fun PantallaControlCasa() {
                     Column(modifier = Modifier.padding(16.dp)) {
                         focos.forEachIndexed { index, foco ->
                             FilaInterruptor(foco.first, foco.second, sistemaEncendido.value) { estado ->
-                                // Convertimos a mayúsculas, quitamos espacios, Ñ y acentos
+
+                                // Corrección aplicada para acentos y caracteres especiales
                                 val nombreFormateado = foco.first.uppercase()
                                     .replace(" ", "_")
                                     .replace("Ñ", "N")
-                                    .replace("Ó", "O") // <--- SOLUCIÓN AQUÍ
+                                    .replace("Ó", "O")
 
                                 val cmd = if (estado) "FOCO_${nombreFormateado}_ON" else "FOCO_${nombreFormateado}_OFF"
                                 client?.publishWith()?.topic("ecosystem/comandos")?.payload(UTF_8.encode(cmd))?.send()
                             }
+
                             if (index < focos.size - 1) {
+
                                 Divider(modifier = Modifier.padding(vertical = 4.dp), color = Color(0xFFF0F0F0))
                             }
                         }
@@ -290,6 +377,7 @@ fun PantallaControlCasa() {
                 // CLIMA
                 //
                 Text(text = "Climatización", fontSize = 18.sp, fontFamily = interBold)
+
                 Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(2.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -300,6 +388,7 @@ fun PantallaControlCasa() {
                             Text("Ventilador", fontSize = 16.sp, color = Color.LightGray)
                             Text("(Módulo de potencia requerido)", fontSize = 12.sp, color = Color.Red)
                         }
+
                         Switch(checked = estadoVentilador.value, enabled = false, onCheckedChange = { })
                     }
                 }
@@ -319,6 +408,7 @@ fun SensorPIRItem(zona: String, detectado: Boolean) {
                 .size(12.dp)
                 .clip(CircleShape)
                 .background(if (detectado) Color.Red else Color.LightGray)
+
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(text = zona, fontSize = 14.sp, color = if (detectado) Color.Black else Color.Gray, fontWeight = if (detectado) FontWeight.Bold else FontWeight.Normal)
@@ -334,6 +424,7 @@ fun FilaInterruptor(nombre: String, estado: MutableState<Boolean>, habilitado: B
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(nombre, fontSize = 16.sp, color = if (habilitado) Color.Black else Color.Gray)
+
         Switch(
             checked = estado.value,
             enabled = habilitado,
