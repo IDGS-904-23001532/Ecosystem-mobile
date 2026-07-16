@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 
 class JardinViewModel : ViewModel() {
     // Estados observables por Jetpack Compose
-    var sistemaActivo by mutableStateOf(false)
+    var sistemaActivo by mutableStateOf(true)
     var valorHumedadSuelo by mutableStateOf("-- %")
     var bombaRiegoActiva by mutableStateOf(false)
     var umbralHumedadMinima by mutableStateOf("30%")
@@ -50,6 +50,7 @@ class JardinViewModel : ViewModel() {
                 password = MqttConfig.PASSWORD.toCharArray()
                 isAutomaticReconnect = true
                 isCleanSession = true
+                socketFactory = javax.net.ssl.SSLSocketFactory.getDefault()
             }
 
             mqttClient?.setCallback(object : MqttCallback {
